@@ -1,9 +1,9 @@
 'use strict'
 
-const { upload } = require('./uploadfotomahasiswa');
-const { uploadAdmin } = require('./uploadfotoadmin');
-const { uploadDosen } = require('./uploadfotodosen');
-const { uploadMakul } = require('./uploadfotomatakuliah');
+const { upload } = require('./middleware/uploadfotomahasiswa');
+const { uploadAdmin } = require('./middleware/uploadfotoadmin');
+const { uploadDosen } = require('./middleware/uploadfotodosen');
+const { uploadMakul } = require('./middleware/uploadfotomatakuliah');
 
 module.exports = function(app){
     var json = require('./controller');
