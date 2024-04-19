@@ -1,18 +1,14 @@
-const bodyParser = require("body-parser");
 const express = require("express");
-const app = express();
-var morgan = require("morgan");
 const cors = require("cors");
+const routes = require("./routes/index");
+const path = require("path");
+require("dotenv").config();
+
+const app = express();
 
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(morgan("dev"));
-
-// call routes
-var routes = require("./routes");
-routes(app);
-app.use("/", require("./middleware"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -28,6 +24,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.listen(4000, () => {
-  console.log("Server Berjalan");
-});
+app.use('/documents', express.static(path.join(__dirname, 'documents')));
+app.use("/api", routes);
+
+app.enable("trust proxy");
+app.listen(8000);
