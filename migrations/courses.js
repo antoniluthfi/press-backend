@@ -6,8 +6,8 @@ const up = () => {
       `
       CREATE TABLE courses (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        course_name VARCHAR(100) NOT NULL,
-        course_code VARCHAR(50) NOT NULL UNIQUE,
+        name VARCHAR(100) NOT NULL,
+        code VARCHAR(50) NOT NULL UNIQUE,
         lecturer_id INT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

@@ -42,11 +42,11 @@ exports.createCourse = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { course_name, course_code, lecturer_id } = req.body;
+  const { name, code, lecturer_id } = req.body;
   try {
     const [result] = await db.promise().query(
-      "INSERT INTO courses (course_name, course_code, lecturer_id) VALUES (?, ?, ?)",
-      [course_name, course_code, lecturer_id]
+      "INSERT INTO courses (name, code, lecturer_id) VALUES (?, ?, ?)",
+      [name, code, lecturer_id]
     );
     
     res.status(201).json({
@@ -66,11 +66,11 @@ exports.updateCourse = async (req, res) => {
   }
 
   const { id } = req.params;
-  const { course_name, course_code, lecturer_id } = req.body;
+  const { name, code, lecturer_id } = req.body;
   try {
     const [result] = await db.promise().query(
-      "UPDATE courses SET course_name = ?, course_code = ?, lecturer_id = ? WHERE id = ?",
-      [course_name, course_code, lecturer_id, id]
+      "UPDATE courses SET name = ?, code = ?, lecturer_id = ? WHERE id = ?",
+      [name, code, lecturer_id, id]
     );
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Course not found" });

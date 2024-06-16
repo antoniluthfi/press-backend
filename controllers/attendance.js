@@ -7,13 +7,56 @@ const { generateRandomString } = require("../utils/generate-random-string");
 // Mengambil semua sesi presensi
 exports.getAllSessions = async (req, res) => {
   try {
-    const [rows] = await db
-      .promise()
-      .query("SELECT * FROM attendance_sessions");
+    const [rows] = await db.promise().query(`
+        SELECT 
+          attendance_sessions.id AS session_id,
+          attendance_sessions.session_date,
+          attendance_sessions.created_at AS session_created_at,
+          attendance_sessions.updated_at AS session_updated_at,
+          locations.id AS location_id,
+          locations.name AS location_name,
+          locations.latitude,
+          locations.longitude,
+          locations.radius,
+          qr_codes.id AS qr_id,
+          qr_codes.qr_code,
+          qr_codes.expiration_time,
+          courses.id AS course_id,
+          courses.name AS course_name,
+          courses.code AS course_code
+        FROM attendance_sessions
+        JOIN locations ON attendance_sessions.location_id = locations.id
+        JOIN qr_codes ON attendance_sessions.qr_id = qr_codes.id
+        JOIN courses ON attendance_sessions.course_id = courses.id
+      `);
+
+    const sessions = rows.map((row) => ({
+      id: row.session_id,
+      session_date: row.session_date,
+      course: {
+        id: row.course_id,
+        name: row.course_name,
+        code: row.course_code, 
+      },
+      location: {
+        id: row.location_id,
+        name: row.location_name,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        radius: row.radius,
+      },
+      qr_code: {
+        id: row.qr_id,
+        qr_code: row.qr_code,
+        expiration_time: row.expiration_time,
+      },
+      created_at: row.session_created_at,
+      updated_at: row.session_updated_at,
+    }));
 
     res.json({
-      message: "Data retrieved successfuly",
-      data: rows,
+      message: "Data retrieved successfully",
+      data: sessions,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
