@@ -7,7 +7,6 @@ const up = () => {
         CREATE TABLE qr_codes (
           id INT AUTO_INCREMENT PRIMARY KEY,
           qr_code VARCHAR(255) NOT NULL,
-          session_id INT NOT NULL,
           expiration_time DATETIME NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

@@ -46,7 +46,7 @@ exports.createLocation = async (req, res) => {
         [name, latitude, longitude, radius]
       );
 
-    res.json({
+    res.status(201).json({
       id: result.insertId,
       message: "Location created successfully",
     });

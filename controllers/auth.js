@@ -39,7 +39,7 @@ exports.register = async (req, res) => {
       ]
     );
 
-    res.json({ user_id: result.insertId, message: "Berhasil mendaftar" });
+    res.status(201).json({ user_id: result.insertId, message: "Berhasil mendaftar" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -49,7 +49,7 @@ exports.createCourse = async (req, res) => {
       [course_name, course_code, lecturer_id]
     );
     
-    res.json({
+    res.status(201).json({
       id: result.insertId,
       message: "Course created successfully",
     });

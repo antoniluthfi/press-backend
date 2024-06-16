@@ -11,7 +11,6 @@ const up = () => {
           attendance_time DATETIME NOT NULL,
           latitude DECIMAL(10, 8) NOT NULL,
           longitude DECIMAL(11, 8) NOT NULL,
-          status ENUM('hadir', 'tidak hadir') NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         );

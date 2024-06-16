@@ -11,22 +11,11 @@ exports.createSessionValidator = [
     .withMessage("Session date is required")
     .isISO8601()
     .withMessage("Invalid date format"),
-  body("qr_code").notEmpty().withMessage("QR code is required"),
-  body("latitude")
+  body("location_id")
     .notEmpty()
-    .withMessage("Latitude is required")
-    .isFloat({ min: -90, max: 90 })
-    .withMessage("Latitude must be a number between -90 and 90"),
-  body("longitude")
-    .notEmpty()
-    .withMessage("Longitude is required")
-    .isFloat({ min: -180, max: 180 })
-    .withMessage("Longitude must be a number between -180 and 180"),
-  body("radius")
-    .notEmpty()
-    .withMessage("Radius is required")
-    .isFloat({ min: 0 })
-    .withMessage("Radius must be a positive number"),
+    .withMessage("Location ID is required")
+    .isInt()
+    .withMessage("Location ID must be an integer"),
 ];
 
 exports.recordAttendanceValidator = [
