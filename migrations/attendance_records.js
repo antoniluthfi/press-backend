@@ -6,8 +6,8 @@ const up = () => {
       `
         CREATE TABLE attendance_records (
           id INT AUTO_INCREMENT PRIMARY KEY,
-          session_id INT,
-          student_id INT,
+          session_id INT NOT NULL,
+          student_id INT NOT NULL,
           attendance_time DATETIME NOT NULL,
           latitude DECIMAL(10, 8) NOT NULL,
           longitude DECIMAL(11, 8) NOT NULL,
@@ -30,8 +30,8 @@ const down = () => {
   db.promise()
     .query(
       `
-    DROP TABLE IF EXISTS attendance_records
-  `
+        DROP TABLE IF EXISTS attendance_records
+      `
     )
     .then(() => {
       console.log('Table "attendance_records" dropped successfully');

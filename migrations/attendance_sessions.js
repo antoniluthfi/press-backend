@@ -6,7 +6,7 @@ const up = () => {
       `
       CREATE TABLE attendance_sessions (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        course_id INT,
+        course_id INT NOT NULL,
         session_date DATETIME NOT NULL,
         qr_code VARCHAR(255) NOT NULL,
         latitude DECIMAL(10, 8) NOT NULL,
