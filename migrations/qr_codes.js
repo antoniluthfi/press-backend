@@ -5,10 +5,9 @@ const up = () => {
     .query(
       `
         CREATE TABLE qr_codes (
-          qr_id INT AUTO_INCREMENT PRIMARY KEY,
+          id INT AUTO_INCREMENT PRIMARY KEY,
           qr_code VARCHAR(255) NOT NULL,
           session_id INT NOT NULL,
-          creation_time DATETIME NOT NULL,
           expiration_time DATETIME NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
