@@ -34,8 +34,8 @@ const down = () => {
   db.promise()
     .query(
       `
-    DROP TABLE IF EXISTS users
-  `
+        DROP TABLE IF EXISTS users
+      `
     )
     .then(() => {
       console.log('Table "users" dropped successfully');
