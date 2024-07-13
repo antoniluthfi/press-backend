@@ -19,6 +19,7 @@ exports.createSessionValidator = [
 ];
 
 exports.recordAttendanceValidator = [
+  body("qr_code").notEmpty().withMessage("QR Code is required"),
   body("session_id")
     .notEmpty()
     .withMessage("Session ID is required")

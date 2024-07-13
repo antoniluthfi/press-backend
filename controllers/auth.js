@@ -87,12 +87,15 @@ exports.login = async (req, res) => {
       }
     );
 
+    const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
     // Update tokens in the database
     await db
       .promise()
-      .query("UPDATE users SET token = ?, refresh_token = ? WHERE id = ?", [
+      .query("UPDATE users SET token = ?, refresh_token = ?, ip_address = ? WHERE id = ?", [
         token,
         refreshToken,
+        ipAddress,
         user.id,
       ]);
 

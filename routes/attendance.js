@@ -8,6 +8,7 @@ const {
 
 // Rute untuk mendapatkan semua sesi presensi
 router.get("/sessions", attendanceController.getAllSessions);
+router.get("/records", attendanceController.getAllRecords);
 
 // Rute untuk membuat sesi presensi baru
 router.post(
