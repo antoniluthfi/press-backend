@@ -26,6 +26,6 @@ app.use((req, res, next) => {
 
 app.use('/documents', express.static(path.join(__dirname, 'documents')));
 app.use("/api", routes);
+app.set('trust proxy', true);
 
-app.enable("trust proxy");
 app.listen(8000);
