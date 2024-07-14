@@ -6,6 +6,7 @@ const attendanceRoutes = require("./attendance");
 const courseRoutes = require("./course");
 const locationRoutes = require("./location");
 const qrCodeRoutes = require("./qr-code");
+const userRoutes = require("./user");
 
 const authMiddleware = require("../middleware/auth");
 
@@ -14,5 +15,6 @@ router.use("/course", authMiddleware.verifyToken, courseRoutes);
 router.use("/attendance", authMiddleware.verifyToken, attendanceRoutes);
 router.use("/location", authMiddleware.verifyToken, locationRoutes);
 router.use("/qr-code", authMiddleware.verifyToken, qrCodeRoutes);
+router.use("/user", authMiddleware.verifyToken, userRoutes);
 
 module.exports = router;
