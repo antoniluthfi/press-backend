@@ -30,7 +30,10 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.6",
+    "@types/nodemailer": "^6.4.15",
     "nodemon": "^3.0.1"
   }
 }
