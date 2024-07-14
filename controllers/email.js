@@ -28,7 +28,7 @@ exports.sendUserLoginCredentialEmail = ({ emailDestination, password }) => {
     const mailOptions = {
       from: process.env.EMAIL_SENDER,
       to: emailDestination,
-      subject: "Welcome to Lapak Event",
+      subject: "Welcome to SiPres",
       html: newUserTemplate
         .replace("{{email}}", emailDestination)
         .replace("{{password}}", password),
