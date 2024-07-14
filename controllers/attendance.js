@@ -3,6 +3,7 @@ const { validationResult } = require("express-validator");
 
 const db = require("../config/db");
 const { generateRandomString } = require("../utils/generate-random-string");
+const { haversineDistance } = require("../utils/haversine-distance");
 
 // Mengambil semua sesi presensi
 exports.getAllSessions = async (req, res) => {
@@ -76,7 +77,8 @@ exports.getAllRecords = async (req, res) => {
           attendance_records.updated_at,
           attendance_sessions.id AS attendance_session_id,
           users.id AS student_id,
-          users.name AS student_name
+          users.name AS student_name,
+          users.identification_number AS student_identification_number
         FROM attendance_records
         JOIN attendance_sessions ON attendance_records.session_id = attendance_sessions.id
         JOIN users ON attendance_records.student_id = users.id
@@ -91,6 +93,7 @@ exports.getAllRecords = async (req, res) => {
       student: {
         id: row.student_id,
         name: row.student_name,
+        identification_number: row.student_identification_number,
       },
       created_at: row.created_at,
       updated_at: row.updated_at,
@@ -164,9 +167,53 @@ exports.recordAttendance = async (req, res) => {
       return res.status(404).json({ message: "Invalid QR Code" });
     }
 
+    // Bandingkan expiration time
     const qrCodeExpirationTime = new Date(rowsQrCode[0].expiration_time);
     if (attendanceTime > qrCodeExpirationTime) {
-      return res.status(400).json({ message: 'QR Code has expired' });
+      return res.status(400).json({ message: "QR Code has expired" });
+    }
+
+    // Ambil titik koordinat lokasi
+    const [rowsSession] = await db.promise().query(
+      `
+        SELECT 
+          attendance_sessions.id, 
+          locations.latitude, 
+          locations.longitude,
+          locations.radius 
+        FROM attendance_sessions 
+        LEFT JOIN locations ON attendance_sessions.location_id = locations.id
+        WHERE attendance_sessions.id = ?
+      `,
+      [session_id]
+    );
+
+    if (rowsSession.length === 0) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    const distance = haversineDistance({
+      lat1: Number(rowsSession[0].latitude),
+      lon1: Number(rowsSession[0].longitude),
+      lat2: Number(latitude),
+      lon2: Number(longitude),
+    });
+
+    // Periksa radius lokasi
+    if (distance > Number(rowsSession[0].radius)) {
+      return res.status(400).json({ message: "Location is out of range" });
+    }
+
+    // Periksa data student
+    const [rowsStudent] = await db
+      .promise()
+      .query("SELECT * FROM users WHERE id = ? AND role = ?", [
+        student_id,
+        "student",
+      ]);
+
+    if (rowsStudent.length === 0) {
+      return res.status(404).json({ message: "Student not found" });
     }
 
     await db
