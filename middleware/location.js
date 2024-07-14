@@ -20,5 +20,5 @@ exports.locationValidator = [
 ];
 
 exports.locationIdValidator = [
-  param("id").isInt().withMessage("Course ID must be an integer"),
+  param("id").isInt().withMessage("Location ID must be an integer"),
 ];
