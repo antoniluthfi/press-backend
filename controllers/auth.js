@@ -87,18 +87,22 @@ exports.login = async (req, res) => {
       }
     );
 
-    const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const ipAddress =
+      req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 
     // Update tokens in the database
     await db
       .promise()
-      .query("UPDATE users SET token = ?, refresh_token = ?, ip_address = ? WHERE id = ?", [
-        token,
-        refreshToken,
-        ipAddress,
-        user.id,
-      ]);
+      .query(
+        "UPDATE users SET token = ?, refresh_token = ?, ip_address = ? WHERE id = ?",
+        [token, refreshToken, ipAddress, user.id]
+      );
 
+    res.cookie("token", token, {
+      httpOnly: true, 
+      secure: process.env.MODE === "production",
+      sameSite: "strict",
+    });
     res.json({ token, refresh_token: refreshToken, message: "Berhasil masuk" });
   } catch (error) {
     res.status(500).json({ error: error.message });

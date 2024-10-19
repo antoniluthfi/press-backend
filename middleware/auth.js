@@ -4,7 +4,7 @@ require("dotenv").config();
 
 // Middleware untuk memverifikasi token JWT
 exports.verifyToken = (req, res, next) => {
-  const token = req.headers["authorization"];
+  const token = req.cookies.token;
   if (!token) {
     return res.status(403).json({ error: "No token provided" });
   }

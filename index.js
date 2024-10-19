@@ -1,31 +1,34 @@
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const routes = require("./routes");
 const path = require("path");
 require("dotenv").config();
 
 const app = express();
 
-app.use(cors());
+// Konfigurasi CORS
+app.use(cors({
+  credentials: true,
+  origin: process.env.CLIENT_WEB_URL,
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, OPTIONS, PUT, PATCH, DELETE"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "X-Requested-With,content-type"
-  );
-  res.setHeader("Access-Control-Allow-Credentials", true);
-  next();
-});
+// Menggunakan cookie-parser untuk membaca cookie
+app.use(cookieParser());
 
-app.use('/documents', express.static(path.join(__dirname, 'documents')));
+// Serve static files
+app.use("/documents", express.static(path.join(__dirname, "documents")));
+
+// API routes
 app.use("/api", routes);
-app.set('trust proxy', true);
 
-app.listen(8000);
+// Mengizinkan proxy jika diperlukan
+app.set("trust proxy", true);
+
+// Menjalankan server
+app.listen(8000, () => {
+  console.log("Server berjalan di port 8000");
+});
