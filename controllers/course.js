@@ -4,11 +4,36 @@ const { validationResult } = require("express-validator");
 // Mendapatkan semua course
 exports.getAllCourses = async (req, res) => {
   try {
-    const [rows] = await db.promise().query("SELECT * FROM courses");
+    const { page = 1, limit = 5, search = "" } = req.query;
+    const offset = (page - 1) * limit;
+
+    // Query untuk search dan pagination
+    const query = `
+      SELECT * FROM courses 
+      WHERE name LIKE ? 
+      LIMIT ? OFFSET ?
+    `;
+    const searchQuery = `%${search}%`;
+
+    // Eksekusi query
+    const [rows] = await db.promise().query(query, [searchQuery, Number(limit), Number(offset)]);
+
+    // Hitung total data untuk pagination
+    const [totalRows] = await db.promise().query(
+      "SELECT COUNT(*) AS total FROM courses WHERE name LIKE ?",
+      [searchQuery]
+    );
+    const total = totalRows[0].total;
 
     res.json({
-      message: "Data retrieved successfuly",
+      message: "Data retrieved successfully",
       data: rows,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: parseInt(limit),
+      },
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

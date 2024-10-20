@@ -180,7 +180,7 @@ exports.getAuthenticatedUser = async (req, res) => {
     const [rows] = await db
       .promise()
       .query(
-        "SELECT name, email, role, gender, identification_number, address, phone_number, profile_url, status FROM users WHERE id = ?",
+        "SELECT id, name, email, role, gender, identification_number, address, phone_number, profile_url, status FROM users WHERE id = ?",
         [req.userId]
       );
     if (rows.length === 0)
