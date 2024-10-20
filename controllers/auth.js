@@ -2,6 +2,7 @@ const db = require("../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
+const { COOKIE_SETTINGS } = require("../utils/constants");
 require("dotenv").config();
 
 // Register (untuk membuat user mahasiswa baru)
@@ -98,12 +99,10 @@ exports.login = async (req, res) => {
         [token, refreshToken, ipAddress, user.id]
       );
 
-    res.cookie("token", token, {
-      httpOnly: true, 
-      secure: process.env.MODE === "production",
-      sameSite: "strict",
-    });
-    res.json({ token, refresh_token: refreshToken, message: "Berhasil masuk" });
+    res.cookie("refresh_token", refreshToken, COOKIE_SETTINGS);
+    res.cookie("token", token, COOKIE_SETTINGS);
+    // res.json({ token, refresh_token: refreshToken, message: "Berhasil masuk" });
+    res.json({ message: "Berhasil masuk" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -173,5 +172,35 @@ exports.refreshToken = async (req, res) => {
     );
   } catch (error) {
     return res.status(401).json({ error: "Invalid refresh token" });
+  }
+};
+
+exports.getAuthenticatedUser = async (req, res) => {
+  try {
+    const [rows] = await db
+      .promise()
+      .query(
+        "SELECT name, email, role, gender, identification_number, address, phone_number, profile_url, status FROM users WHERE id = ?",
+        [req.userId]
+      );
+    if (rows.length === 0)
+      return res.status(404).json({ error: "User not found" });
+
+    res.json({
+      message: "Data retrieved successfuly",
+      data: rows[0],
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.logout = async (req, res) => {
+  try {
+    res.clearCookie("token", COOKIE_SETTINGS);
+    res.clearCookie("refresh_token", COOKIE_SETTINGS);
+    res.json({ message: "Berhasil logout" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };

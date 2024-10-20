@@ -5,6 +5,7 @@ const {
   registerValidator,
   loginValidator,
   refreshTokenValidator,
+  verifyToken,
 } = require("../middleware/auth");
 
 // Rute untuk register
@@ -18,6 +19,16 @@ router.post(
   "/refresh-token",
   refreshTokenValidator,
   authController.refreshToken
+);
+
+// Rute untuk mendapatkan user yang telah terotentikasi
+router.get("/authenticated-user", verifyToken, authController.getAuthenticatedUser);
+
+// Rute untuk logout
+router.get(
+  "/logout",
+  verifyToken,
+  authController.logout
 );
 
 module.exports = router;
