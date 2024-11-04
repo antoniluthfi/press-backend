@@ -14,6 +14,7 @@
 ## Detail Database
 - `users`: Tabel untuk menyimpan informasi pengguna (dosen dan mahasiswa)
 - `courses`: Tabel untuk menyimpan informasi mata kuliah
+- `course_meetings`: Tabel untuk menyimpan informasi pertemuan dari suatu mata kuliah
 - `attendance_sessions`: Tabel untuk menyimpan informasi sesi presensi
 - `attendance_records`: Tabel untuk menyimpan catatan presensi mahasiswa
 - `qr_codes`: Tabel untuk menyimpan informasi QR code

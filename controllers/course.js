@@ -16,13 +16,16 @@ exports.getAllCourses = async (req, res) => {
     const searchQuery = `%${search}%`;
 
     // Eksekusi query
-    const [rows] = await db.promise().query(query, [searchQuery, Number(limit), Number(offset)]);
+    const [rows] = await db
+      .promise()
+      .query(query, [searchQuery, Number(limit), Number(offset)]);
 
     // Hitung total data untuk pagination
-    const [totalRows] = await db.promise().query(
-      "SELECT COUNT(*) AS total FROM courses WHERE name LIKE ?",
-      [searchQuery]
-    );
+    const [totalRows] = await db
+      .promise()
+      .query("SELECT COUNT(*) AS total FROM courses WHERE name LIKE ?", [
+        searchQuery,
+      ]);
     const total = totalRows[0].total;
 
     res.json({
@@ -44,16 +47,25 @@ exports.getAllCourses = async (req, res) => {
 exports.getCourseById = async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await db
+    const [courseRows] = await db
       .promise()
       .query("SELECT * FROM courses WHERE id = ?", [id]);
-    if (rows.length === 0) {
+    if (courseRows.length === 0) {
       return res.status(404).json({ error: "Course not found" });
     }
 
+    const [meetingsRows] = await db
+      .promise()
+      .query("SELECT * FROM course_meetings WHERE course_id = ?", [id]);
+
+    const courseData = {
+      ...courseRows[0],
+      meetings: meetingsRows,
+    };
+
     res.json({
       message: "Data retrieved successfuly",
-      data: rows[0],
+      data: courseData,
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -67,21 +79,43 @@ exports.createCourse = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { name, code, lecturer_id } = req.body;
+  await db.promise().beginTransaction();
+
+  const { name, code, lecturer_id, meetings } = req.body;
   try {
-    const [result] = await db
+    const [courseResult] = await db
       .promise()
       .query("INSERT INTO courses (name, code, lecturer_id) VALUES (?, ?, ?)", [
         name,
         code,
         lecturer_id,
       ]);
+    const courseId = courseResult.insertId;
 
+    if (meetings && meetings.length > 0) {
+      const meetingValues = meetings.map((meeting) => [
+        courseId,
+        meeting.meeting_number,
+        meeting.date,
+        meeting.start_time,
+        meeting.end_time,
+      ]);
+
+      await db
+        .promise()
+        .query(
+          "INSERT INTO course_meetings (course_id, meeting_number, date, start_time, end_time) VALUES ?",
+          [meetingValues]
+        );
+    }
+
+    await db.promise().commit();
     res.status(201).json({
-      id: result.insertId,
+      id: courseResult.insertId,
       message: "Course created successfully",
     });
   } catch (error) {
+    await db.promise().rollback();
     res.status(500).json({ error: error.message });
   }
 };
@@ -93,8 +127,10 @@ exports.updateCourse = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
+  await db.promise().beginTransaction();
+
   const { id } = req.params;
-  const { name, code, lecturer_id } = req.body;
+  const { name, code, lecturer_id, meetings } = req.body;
   try {
     const [result] = await db
       .promise()
@@ -106,14 +142,39 @@ exports.updateCourse = async (req, res) => {
       return res.status(404).json({ error: "Course not found" });
     }
 
+    await db
+      .promise()
+      .query("DELETE FROM course_meetings WHERE course_id = ?", [id]);
+
+    if (meetings && meetings.length > 0) {
+      const meetingValues = meetings.map((meeting) => [
+        courseId,
+        meeting.meeting_number,
+        meeting.date,
+        meeting.start_time,
+        meeting.end_time,
+      ]);
+
+      await db
+        .promise()
+        .query(
+          "INSERT INTO course_meetings (course_id, meeting_number, date, start_time, end_time) VALUES ?",
+          [meetingValues]
+        );
+    }
+
+    await db.promise().commit();
     res.json({ message: "Course updated successfully" });
   } catch (error) {
+    await db.promise().rollback();
     res.status(500).json({ error: error.message });
   }
 };
 
 // Menghapus course
 exports.deleteCourse = async (req, res) => {
+  await db.promise().beginTransaction();
+
   const { id } = req.params;
   try {
     // Cek course pada data lain
@@ -134,8 +195,12 @@ exports.deleteCourse = async (req, res) => {
       return res.status(404).json({ error: "Course not found" });
     }
 
+    await db.promise().query("DELETE FROM courses WHERE id = ?", [courseId]);
+
+    await db.promise().commit();
     res.json({ message: "Course deleted successfully" });
   } catch (error) {
+    await db.promise().rollback();
     res.status(500).json({ error: error.message });
   }
 };
