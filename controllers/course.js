@@ -11,6 +11,7 @@ exports.getAllCourses = async (req, res) => {
     const query = `
       SELECT * FROM courses 
       WHERE name LIKE ? 
+      ORDER BY id DESC
       LIMIT ? OFFSET ?
     `;
     const searchQuery = `%${search}%`;
@@ -81,14 +82,15 @@ exports.createCourse = async (req, res) => {
 
   await db.promise().beginTransaction();
 
-  const { name, code, lecturer_id, meetings } = req.body;
+  const { name, code, lecturer_id, location_id, meetings } = req.body;
   try {
     const [courseResult] = await db
       .promise()
-      .query("INSERT INTO courses (name, code, lecturer_id) VALUES (?, ?, ?)", [
+      .query("INSERT INTO courses (name, code, lecturer_id, location_id) VALUES (?, ?, ?)", [
         name,
         code,
         lecturer_id,
+        location_id,
       ]);
     const courseId = courseResult.insertId;
 
@@ -130,13 +132,13 @@ exports.updateCourse = async (req, res) => {
   await db.promise().beginTransaction();
 
   const { id } = req.params;
-  const { name, code, lecturer_id, meetings } = req.body;
+  const { name, code, lecturer_id, location_id, meetings } = req.body;
   try {
     const [result] = await db
       .promise()
       .query(
-        "UPDATE courses SET name = ?, code = ?, lecturer_id = ? WHERE id = ?",
-        [name, code, lecturer_id, id]
+        "UPDATE courses SET name = ?, code = ?, lecturer_id = ?, location_id = ? WHERE id = ?",
+        [name, code, lecturer_id, location_id, id]
       );
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Course not found" });
@@ -148,7 +150,7 @@ exports.updateCourse = async (req, res) => {
 
     if (meetings && meetings.length > 0) {
       const meetingValues = meetings.map((meeting) => [
-        courseId,
+        id,
         meeting.meeting_number,
         meeting.date,
         meeting.start_time,

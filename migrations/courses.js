@@ -9,6 +9,7 @@ const up = () => {
         name VARCHAR(100) NOT NULL,
         code VARCHAR(50) NOT NULL UNIQUE,
         lecturer_id INT NOT NULL,
+        location_id INT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       );  

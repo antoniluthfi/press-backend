@@ -8,7 +8,7 @@ exports.createCourseValidator = [
     .withMessage("Lecturer ID is required")
     .isInt()
     .withMessage("Lecturer ID must be an integer"),
-    
+
   // Validasi untuk 'meetings' (harus array dan tidak boleh kosong)
   body("meetings")
     .isArray({ min: 1 })
@@ -51,6 +51,11 @@ exports.updateCourseValidator = [
     .withMessage("Lecturer ID is required")
     .isInt()
     .withMessage("Lecturer ID must be an integer"),
+  body("location_id")
+    .notEmpty()
+    .withMessage("Location ID is required")
+    .isInt()
+    .withMessage("Location ID must be an integer"),
 
   // Validasi untuk 'meetings' (harus array dan tidak boleh kosong)
   body("meetings")
