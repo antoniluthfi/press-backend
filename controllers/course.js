@@ -201,7 +201,7 @@ exports.deleteCourse = async (req, res) => {
       return res.status(404).json({ error: "Course not found" });
     }
 
-    await db.promise().query("DELETE FROM courses WHERE id = ?", [courseId]);
+    await db.promise().query("DELETE FROM course_meetings WHERE course_id = ?", [id]);
 
     await db.promise().commit();
     res.json({ message: "Course deleted successfully" });

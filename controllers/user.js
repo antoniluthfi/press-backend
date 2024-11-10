@@ -183,34 +183,41 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     // Cek user pada data attendance_records
-    const [rowsUser1] = await db
+    const [rowAttendanceRecords] = await db
       .promise()
       .query("SELECT id FROM attendance_records WHERE student_id = ?", [
         req.params.id,
       ]);
 
-    if (rowsUser1.length) {
+    if (rowAttendanceRecords.length) {
       return res
         .status(400)
         .json({ message: "User has been used in other data" });
     }
 
     // Cek user pada data courses
-    const [rowsUser2] = await db
+    const [rowCourses] = await db
       .promise()
       .query("SELECT id FROM courses WHERE lecturer_id = ?", [req.params.id]);
 
-    if (rowsUser2.length) {
+    if (rowCourses.length) {
       return res
         .status(400)
         .json({ message: "User has been used in other data" });
     }
 
+    // Cek data user
+    const [rowUsers] = await db
+      .promise()
+      .query("SELECT profile_url FROM users WHERE id = ?", [req.params.id]);
+    removeFile(rowUsers?.[0]?.profile_url);
+
     const [result] = await db
       .promise()
       .query("DELETE FROM users WHERE id = ?", [req.params.id]);
-    if (result.affectedRows === 0)
+    if (result.affectedRows === 0) {
       return res.status(404).json({ error: "User not found" });
+    }
 
     res.json({ message: "User deleted successfully" });
   } catch (error) {
