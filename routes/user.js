@@ -25,7 +25,7 @@ router.post(
 );
 
 // Rute untuk mengupdate user
-router.put(
+router.post(
   "/:id",
   uploadUserProfileImage.single("profile_url"),
   verifyToken,

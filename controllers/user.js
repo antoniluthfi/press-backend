@@ -16,6 +16,7 @@ exports.getAllUsers = async (req, res) => {
       `SELECT id, name, email, role, gender, identification_number, address, phone_number, profile_url, status FROM users 
          WHERE role = ? 
          AND (name LIKE ? OR email LIKE ?)
+         ORDER BY id DESC
          LIMIT ? OFFSET ?`,
       [role, `%${search}%`, `%${search}%`, Number(limit), Number(offset)]
     );
@@ -145,9 +146,10 @@ exports.updateUser = async (req, res) => {
 
     let profile_url = "";
     if (req.file) {
+      removeFile(rows?.[0]?.profile_url);
       profile_url = req.file?.path;
     } else {
-      profile_url = rows[0].profile_url;
+      profile_url = rows?.[0]?.profile_url;
     }
 
     const [user] = await db
