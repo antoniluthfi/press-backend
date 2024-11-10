@@ -18,4 +18,7 @@ router.post(
 // Rute untuk refresh qr code
 router.put("/refresh/:id", verifyToken, qrCodeController.refreshQrCode);
 
+// Rute untuk hapus qr code
+router.delete("/:id", verifyToken, qrCodeController.deleteQrCode);
+
 module.exports = router;

@@ -34,13 +34,13 @@ exports.generateQrCode = async (req, res) => {
     const [result] = await db
       .promise()
       .query(
-        "INSERT INTO qr_codes (qr_code, expiration_time, course_meeting_id) VAUES (?, ?, ?)",
+        "INSERT INTO qr_codes (qr_code, expiration_time, course_meeting_id) VALUES (?, ?, ?)",
         [hashedQrCode, expirationTime, course_meeting_id]
       );
 
     const [newRows] = await db
       .promise()
-      .query("SELECT * FROM qr_codes WHERE id = ?", [result[0].id]);
+      .query("SELECT * FROM qr_codes WHERE id = ?", [result.insertId]);
 
     res.json({ message: "QR Code generated successfully", data: newRows[0] });
   } catch (error) {
@@ -91,6 +91,21 @@ exports.refreshQrCode = async (req, res) => {
       .query("SELECT * FROM qr_codes WHERE id = ?", [id]);
 
     res.json({ message: "QR Code updated successfully", data: newRows[0] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Hapus QR Code
+exports.deleteQrCode = async (req, res) => {
+  try {
+    const [result] = await db
+      .promise()
+      .query("DELETE FROM qr_codes WHERE id = ?", [req.params.id]);
+    if (result.affectedRows === 0)
+      return res.status(404).json({ error: "QR code not found" });
+
+    res.json({ message: "QR code deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

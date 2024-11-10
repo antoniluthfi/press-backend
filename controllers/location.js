@@ -80,7 +80,14 @@ exports.updateLocation = async (req, res) => {
 
 exports.deleteLocation = async (req, res) => {
   try {
-    if (rowsSession.length) {
+    // Cek lokasi pada data lain
+    const [rowsCourse] = await db
+      .promise()
+      .query("SELECT id FROM courses WHERE location_id = ?", [
+        req.params.id,
+      ]);
+
+    if (rowsCourse.length) {
       return res
         .status(400)
         .json({ message: "Location has been used in other data" });
