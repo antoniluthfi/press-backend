@@ -13,6 +13,7 @@ exports.verifyToken = (req, res, next) => {
     if (err) {
       return res.status(500).json({ error: "Failed to authenticate token" });
     }
+    console.log('req.file: ', req.file);
     req.userId = decoded.user_id;
     req.userRole = decoded.role;
     next();

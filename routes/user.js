@@ -6,20 +6,34 @@ const {
   createNewUserValidator,
   updateUserValidator,
 } = require("../middleware/user");
+const { verifyToken } = require("../middleware/auth");
+const { uploadUserProfileImage } = require("../middleware/multer");
 
 // Rute untuk mendapatkan semua user
-router.get("/", userController.getAllUsers);
+router.get("/", verifyToken, userController.getAllUsers);
 
 // Rute untuk mendapatkan user berdasarkan ID
-router.get("/:id", userIdValidator, userController.getUserById);
+router.get("/:id", verifyToken, userIdValidator, userController.getUserById);
 
 // Rute untuk membuat user baru
-router.post("/", createNewUserValidator, userController.createNewUser);
+router.post(
+  "/",
+  uploadUserProfileImage.single("profile_url"),
+  verifyToken,
+  createNewUserValidator,
+  userController.createNewUser
+);
 
 // Rute untuk mengupdate user
-router.put("/:id", updateUserValidator, userController.updateUser);
+router.put(
+  "/:id",
+  uploadUserProfileImage.single("profile_url"),
+  verifyToken,
+  updateUserValidator,
+  userController.updateUser
+);
 
 // Rute untuk menghapus user
-router.delete("/:id", userIdValidator, userController.deleteUser);
+router.delete("/:id", verifyToken, userIdValidator, userController.deleteUser);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const { validationResult } = require("express-validator");
 const { generateRandomString } = require("../utils/generate-random-string");
 const { sendUserLoginCredentialEmail } = require("./email");
+const removeFile = require("../utils/remove-file");
 
 exports.getAllUsers = async (req, res) => {
   const { page = 1, limit = 5, search = "", role } = req.query; // Mengambil query params
@@ -48,7 +49,10 @@ exports.getUserById = async (req, res) => {
   try {
     const [rows] = await db
       .promise()
-      .query("SELECT * FROM users WHERE id = ?", [req.params.id]);
+      .query(
+        "SELECT id, name, email, role, gender, identification_number, address, phone_number, profile_url, status FROM users WHERE id = ?",
+        [req.params.id]
+      );
     if (rows.length === 0)
       return res.status(404).json({ error: "User not found" });
 
@@ -64,6 +68,7 @@ exports.getUserById = async (req, res) => {
 exports.createNewUser = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    removeFile(req.file?.path);
     return res.status(400).json({ errors: errors.array() });
   }
 
@@ -76,7 +81,6 @@ exports.createNewUser = async (req, res) => {
       identification_number,
       address,
       phone_number,
-      profile_url,
     } = req.body;
 
     const password = generateRandomString(8); // Panjang string random
@@ -94,25 +98,25 @@ exports.createNewUser = async (req, res) => {
           identification_number,
           address,
           phone_number,
-          profile_url,
+          req.file?.path || "",
           "active",
           hashedPassword,
         ]
       );
 
-    if (result.affectedRows > 0) {
-      sendUserLoginCredentialEmail({ emailDestination: email, password });
-
-      res.status(201).json({
-        id: result.insertId,
-        message: "User created successfully",
-      });
+    if (result.affectedRows === 0) {
+      removeFile(req.file?.path);
+      return res.status(500).json({ error: "Internal Server Error" });
     }
 
-    res.status(400).json({
-      message: "",
+    sendUserLoginCredentialEmail({ emailDestination: email, password });
+
+    res.status(201).json({
+      id: result.insertId,
+      message: "User created successfully",
     });
   } catch (error) {
+    removeFile(req.file?.path);
     res.status(500).json({ error: error.message });
   }
 };
@@ -120,6 +124,7 @@ exports.createNewUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    removeFile(req.file?.path);
     return res.status(400).json({ errors: errors.array() });
   }
 
@@ -130,11 +135,21 @@ exports.updateUser = async (req, res) => {
     identification_number,
     address,
     phone_number,
-    profile_url,
     status,
   } = req.body;
 
   try {
+    const [rows] = await db
+      .promise()
+      .query("SELECT * FROM users WHERE id = ?", [req.params.id]);
+
+    let profile_url = "";
+    if (req.file) {
+      profile_url = req.file?.path;
+    } else {
+      profile_url = rows[0].profile_url;
+    }
+
     const [user] = await db
       .promise()
       .query(
@@ -151,11 +166,14 @@ exports.updateUser = async (req, res) => {
           req.params.id,
         ]
       );
-    if (user.affectedRows === 0)
+    if (user.affectedRows === 0) {
+      removeFile(req.file?.path);
       return res.status(404).json({ error: "User not found" });
+    }
 
     res.json({ message: "User updated successfully" });
   } catch (error) {
+    removeFile(req.file?.path);
     res.status(500).json({ error: error.message });
   }
 };

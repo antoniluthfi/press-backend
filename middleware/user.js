@@ -8,7 +8,6 @@ exports.createNewUserValidator = [
   body('identification_number').notEmpty().withMessage('Identification number is required'),
   body('address').notEmpty().withMessage('Address is required'),
   body('phone_number').notEmpty().withMessage('Phone number is required'),
-  body('profile_url').isURL().withMessage('Valid profile URL is required'),
 ];
 
 exports.updateUserValidator = [
@@ -19,7 +18,6 @@ exports.updateUserValidator = [
   body('identification_number').notEmpty().withMessage('Identification number is required'),
   body('address').notEmpty().withMessage('Address is required'),
   body('phone_number').notEmpty().withMessage('Phone number is required'),
-  body('profile_url').isURL().withMessage('Valid profile URL is required'),
   body('status').notEmpty().withMessage('Status is required'),
 ];
 
