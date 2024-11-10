@@ -8,9 +8,10 @@ const up = () => {
           id INT AUTO_INCREMENT PRIMARY KEY,
           qr_code VARCHAR(255) NOT NULL,
           expiration_time DATETIME NOT NULL,
+          course_meeting_id INT NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        );    
+        );
       `
     )
     .then(() => {

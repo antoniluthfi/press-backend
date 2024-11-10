@@ -9,9 +9,15 @@ exports.getAllCourses = async (req, res) => {
 
     // Query untuk search dan pagination
     const query = `
-      SELECT * FROM courses 
-      WHERE name LIKE ? 
-      ORDER BY id DESC
+      SELECT
+        courses.*,
+        users.name AS lecturer_name,
+        locations.name AS location_name
+      FROM courses
+      JOIN users ON courses.lecturer_id = users.id
+      JOIN locations ON courses.location_id = locations.id
+      WHERE courses.name LIKE ? 
+      ORDER BY courses.id DESC
       LIMIT ? OFFSET ?
     `;
     const searchQuery = `%${search}%`;
@@ -48,9 +54,20 @@ exports.getAllCourses = async (req, res) => {
 exports.getCourseById = async (req, res) => {
   const { id } = req.params;
   try {
+    const query = `
+      SELECT 
+        courses.*,
+        users.name AS lecturer_name,
+        locations.name AS location_name
+      FROM courses 
+      JOIN users ON courses.lecturer_id = users.id
+      JOIN locations ON courses.location_id = locations.id
+      WHERE courses.id = ?
+    `;
+
     const [courseRows] = await db
       .promise()
-      .query("SELECT * FROM courses WHERE id = ?", [id]);
+      .query(query, [id]);
     if (courseRows.length === 0) {
       return res.status(404).json({ error: "Course not found" });
     }
@@ -86,12 +103,10 @@ exports.createCourse = async (req, res) => {
   try {
     const [courseResult] = await db
       .promise()
-      .query("INSERT INTO courses (name, code, lecturer_id, location_id) VALUES (?, ?, ?)", [
-        name,
-        code,
-        lecturer_id,
-        location_id,
-      ]);
+      .query(
+        "INSERT INTO courses (name, code, lecturer_id, location_id) VALUES (?, ?, ?)",
+        [name, code, lecturer_id, location_id]
+      );
     const courseId = courseResult.insertId;
 
     if (meetings && meetings.length > 0) {
@@ -179,17 +194,6 @@ exports.deleteCourse = async (req, res) => {
 
   const { id } = req.params;
   try {
-    // Cek course pada data lain
-    const [rowsSession] = await db
-      .promise()
-      .query("SELECT id FROM attendance_sessions WHERE course_id = ?", [id]);
-
-    if (rowsSession.length) {
-      return res
-        .status(400)
-        .json({ message: "Course has been used in other data" });
-    }
-
     const [result] = await db
       .promise()
       .query("DELETE FROM courses WHERE id = ?", [id]);

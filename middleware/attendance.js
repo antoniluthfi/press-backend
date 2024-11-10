@@ -1,23 +1,5 @@
 const { body } = require("express-validator");
 
-exports.createSessionValidator = [
-  body("course_id")
-    .notEmpty()
-    .withMessage("Course ID is required")
-    .isInt()
-    .withMessage("Course ID must be an integer"),
-  body("session_date")
-    .notEmpty()
-    .withMessage("Session date is required")
-    .isISO8601()
-    .withMessage("Invalid date format"),
-  body("location_id")
-    .notEmpty()
-    .withMessage("Location ID is required")
-    .isInt()
-    .withMessage("Location ID must be an integer"),
-];
-
 exports.recordAttendanceValidator = [
   body("qr_code").notEmpty().withMessage("QR Code is required"),
   body("session_id")

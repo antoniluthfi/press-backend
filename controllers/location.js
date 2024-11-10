@@ -80,13 +80,6 @@ exports.updateLocation = async (req, res) => {
 
 exports.deleteLocation = async (req, res) => {
   try {
-    // Cek lokasi pada data lain
-    const [rowsSession] = await db
-      .promise()
-      .query("SELECT id FROM attendance_sessions WHERE location_id = ?", [
-        req.params.id,
-      ]);
-
     if (rowsSession.length) {
       return res
         .status(400)
