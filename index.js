@@ -10,7 +10,10 @@ const app = express();
 // Konfigurasi CORS
 app.use(cors({
   credentials: true,
-  origin: process.env.CLIENT_WEB_URL,
+  origin: [
+    process.env.CLIENT_WEB_URL,
+    process.env.CLIENT_WEB_URL_2,
+  ],
 }));
 
 app.use(express.json());
