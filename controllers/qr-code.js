@@ -25,9 +25,21 @@ exports.generateQrCode = async (req, res) => {
   }
 
   const { course_meeting_id } = req.body;
-  const expirationTime = new Date(Date.now() + 1 * 60000); // Menambahkan 1 menit dari waktu saat ini
 
   try {
+    // Ambil informasi course_meeting dari database
+    const [courseMeetingRows] = await db
+      .promise()
+      .query(
+        "SELECT date, start_time, end_time FROM course_meetings WHERE id = ?",
+        [course_meeting_id]
+      );
+
+    if (courseMeetingRows.length === 0) {
+      return res.status(404).json({ error: "Course meeting not found" });
+    }
+
+    const expirationTime = new Date(Date.now() + 1 * 60000); // Tambahkan 1 menit dari waktu saat ini
     const randomString = generateRandomString(16); // Panjang string random
     const hashedQrCode = await bcrypt.hash(randomString, 10);
 
