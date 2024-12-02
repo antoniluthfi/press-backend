@@ -63,13 +63,13 @@ exports.login = async (req, res) => {
       .promise()
       .query("SELECT * FROM users WHERE email = ?", [email]);
     if (rows.length === 0) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json({ error: "User not found" });
     }
 
     const user = rows[0];
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(404).json({ error: "Invalid email or password" });
     }
 
     const token = jwt.sign(
@@ -101,7 +101,6 @@ exports.login = async (req, res) => {
 
     res.cookie("refresh_token", refreshToken, COOKIE_SETTINGS);
     res.cookie("token", token, COOKIE_SETTINGS);
-    // res.json({ token, refresh_token: refreshToken, message: "Berhasil masuk" });
     res.json({ message: "Berhasil masuk" });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -110,14 +109,11 @@ exports.login = async (req, res) => {
 
 // Refresh Token
 exports.refreshToken = async (req, res) => {
-  const { refresh_token } = req.body;
-  if (!refresh_token) {
-    return res.status(400).json({ error: "Refresh token is required" });
-  }
-
   try {
+    const refreshToken = req.cookies.refresh_token;
+
     jwt.verify(
-      refresh_token,
+      refreshToken,
       process.env.REFRESH_TOKEN_SECRET,
       async (err, decoded) => {
         if (err) {
@@ -130,7 +126,7 @@ exports.refreshToken = async (req, res) => {
           .promise()
           .query("SELECT * FROM users WHERE id = ? AND refresh_token = ?", [
             decoded.user_id,
-            refresh_token,
+            refreshToken,
           ]);
 
         if (rows.length === 0) {
@@ -163,9 +159,10 @@ exports.refreshToken = async (req, res) => {
             user.id,
           ]);
 
+        res.cookie("refresh_token", newRefreshToken, COOKIE_SETTINGS);
+        res.cookie("token", newAccessToken, COOKIE_SETTINGS);
+
         res.json({
-          token: newAccessToken,
-          refresh_token: newRefreshToken,
           message: "Token refreshed",
         });
       }

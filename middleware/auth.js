@@ -58,7 +58,3 @@ exports.loginValidator = [
     .withMessage("Invalid email format"),
   body("password").notEmpty().withMessage("Password is required"),
 ];
-
-exports.refreshTokenValidator = [
-  body("refresh_token").notEmpty().withMessage("Refresh token is required"),
-];

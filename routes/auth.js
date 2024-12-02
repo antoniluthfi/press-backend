@@ -4,7 +4,6 @@ const authController = require("../controllers/auth");
 const {
   registerValidator,
   loginValidator,
-  refreshTokenValidator,
   verifyToken,
 } = require("../middleware/auth");
 
@@ -15,20 +14,16 @@ router.post("/register", registerValidator, authController.register);
 router.post("/login", loginValidator, authController.login);
 
 // Rute untuk refresh token
-router.post(
-  "/refresh-token",
-  refreshTokenValidator,
-  authController.refreshToken
-);
+router.get("/refresh-token", verifyToken, authController.refreshToken);
 
 // Rute untuk mendapatkan user yang telah terotentikasi
-router.get("/authenticated-user", verifyToken, authController.getAuthenticatedUser);
+router.get(
+  "/authenticated-user",
+  verifyToken,
+  authController.getAuthenticatedUser
+);
 
 // Rute untuk logout
-router.get(
-  "/logout",
-  verifyToken,
-  authController.logout
-);
+router.get("/logout", verifyToken, authController.logout);
 
 module.exports = router;
