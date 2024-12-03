@@ -9,7 +9,7 @@ const up = () => {
           name VARCHAR(100) NOT NULL,
           email VARCHAR(100) NOT NULL UNIQUE,
           gender ENUM('male', 'female') NOT NULL,
-          role ENUM('student', 'lecturer') NOT NULL,
+          role ENUM('admin', 'student', 'lecturer') NOT NULL,
           identification_number VARCHAR(30) NOT NULL,
           address TEXT NOT NULL,
           phone_number VARCHAR(20) NOT NULL,

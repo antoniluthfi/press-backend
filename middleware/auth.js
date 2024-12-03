@@ -57,4 +57,9 @@ exports.loginValidator = [
     .isEmail()
     .withMessage("Invalid email format"),
   body("password").notEmpty().withMessage("Password is required"),
+  body("scope")
+    .notEmpty()
+    .withMessage("Scope is required")
+    .isIn(["app", "portal"])
+    .withMessage("Scope must be either 'app' or 'portal'"),
 ];

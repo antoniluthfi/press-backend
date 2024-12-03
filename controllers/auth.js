@@ -57,11 +57,13 @@ exports.login = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
   }
 
-  const { email, password } = req.body;
+  const { email, password, scope } = req.body;
   try {
-    const [rows] = await db
-      .promise()
-      .query("SELECT * FROM users WHERE email = ?", [email]);
+    const isMobile = scope === "app";
+    const roleQuery = isMobile ? "role = 'student'" : "role != 'student'";
+    const query = `SELECT * FROM users WHERE email = ? AND ${roleQuery}`;
+
+    const [rows] = await db.promise().query(query, [email]);
     if (rows.length === 0) {
       return res.status(401).json({ error: "User not found" });
     }
