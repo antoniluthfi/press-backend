@@ -6,7 +6,7 @@ const {
 } = require("../utils/generate-current-academic-year");
 
 exports.getAllUserCourses = async (req, res) => {
-  const { page = 1, limit = 5, search = "", role = "" } = req.query; // Mengambil query params
+  const { page = 1, limit = 5, search = "", role = "", course_id = "" } = req.query; // Mengambil query params
 
   const offset = (page - 1) * limit; // Menghitung offset untuk pagination
 
@@ -30,6 +30,7 @@ exports.getAllUserCourses = async (req, res) => {
         AND user_courses.semester = ?
         AND (users.name LIKE ? OR courses.name LIKE ?)
         ${role ? "AND users.role = ?" : ""}
+        ${course_id ? "AND course_id = ?" : ""}
       ORDER BY user_courses.id DESC
       LIMIT ? OFFSET ?`;
 
@@ -42,6 +43,10 @@ exports.getAllUserCourses = async (req, res) => {
 
     if (role) {
       params.push(role); // Menambahkan filter role jika ada
+    }
+
+    if (course_id) {
+      params.push(course_id); // Menambahkan filter course_id jika ada
     }
 
     params.push(Number(limit), Number(offset));
@@ -67,6 +72,10 @@ exports.getAllUserCourses = async (req, res) => {
 
     if (role) {
       countParams.push(role); // Menambahkan filter role jika ada
+    }
+
+    if (course_id) {
+      countParams.push(course_id); // Menambahkan filter course_id jika ada
     }
 
     const [totalRows] = await db.promise().query(countQuery, countParams);
