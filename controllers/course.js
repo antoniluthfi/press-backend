@@ -4,7 +4,7 @@ const { validationResult } = require("express-validator");
 // Mendapatkan semua course
 exports.getAllCourses = async (req, res) => {
   try {
-    const { page = 1, limit = 5, search = "" } = req.query;
+    const { page = 1, limit = 5, search = "", lecturer_id = "" } = req.query;
     const offset = (page - 1) * limit;
 
     // Query untuk search dan pagination
@@ -17,36 +17,49 @@ exports.getAllCourses = async (req, res) => {
       JOIN users ON courses.lecturer_id = users.id
       JOIN locations ON courses.location_id = locations.id
       WHERE courses.name LIKE ? 
+      ${lecturer_id ? "AND courses.lecturer_id = ?" : ""}
       ORDER BY courses.id DESC
       LIMIT ? OFFSET ?
     `;
+
     const searchQuery = `%${search}%`;
+    const params = [searchQuery];
+
+    // Tambahkan lecturer_id jika ada
+    if (lecturer_id) {
+      params.push(lecturer_id);
+    }
+
+    // Tambahkan limit dan offset
+    params.push(Number(limit), Number(offset));
 
     // Eksekusi query
-    const [rows] = await db
-      .promise()
-      .query(query, [searchQuery, Number(limit), Number(offset)]);
+    const [rows] = await db.promise().query(query, params);
 
     // Hitung total data untuk pagination
-    const [totalRows] = await db
-      .promise()
-      .query("SELECT COUNT(*) AS total FROM courses WHERE name LIKE ?", [
-        searchQuery,
-      ]);
+    const countQuery = `
+      SELECT COUNT(*) AS total
+      FROM courses
+      ${lecturer_id ? "WHERE name LIKE ? AND lecturer_id = ?" : "WHERE name LIKE ?"}
+    `;
+    const countParams = lecturer_id ? [searchQuery, lecturer_id] : [searchQuery];
+    const [totalRows] = await db.promise().query(countQuery, countParams);
+
     const total = totalRows[0].total;
 
     res.json({
       message: "Data retrieved successfully",
       data: rows,
       pagination: {
-        currentPage: parseInt(page),
+        currentPage: parseInt(page, 10),
         totalPages: Math.ceil(total / limit),
         totalItems: total,
-        itemsPerPage: parseInt(limit),
+        itemsPerPage: parseInt(limit, 10),
       },
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
