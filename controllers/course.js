@@ -57,6 +57,13 @@ exports.getAllCourses = async (req, res) => {
     // Eksekusi query
     const [rows] = await db.promise().query(query, params);
 
+    // Parse JSON strings menjadi objects
+    rows.forEach((row) => {
+      if (row.upcoming_schedule) {
+        row.upcoming_schedule = JSON.parse(row.upcoming_schedule);
+      }
+    });
+
     // Hitung total data untuk pagination
     const countQuery = `
       SELECT COUNT(*) AS total

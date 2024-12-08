@@ -110,6 +110,13 @@ exports.getAllUserCourses = async (req, res) => {
 
     const [rows] = await db.promise().query(baseQuery, params);
 
+    // Parse JSON strings to objects
+    rows.forEach((row) => {
+      if (row.upcoming_schedule) {
+        row.upcoming_schedule = JSON.parse(row.upcoming_schedule);
+      }
+    });
+    
     // Parse JSON strings if include_attendance_recap is true
     if (Number(include_attendance_recap)) {
       rows.forEach((row) => {
