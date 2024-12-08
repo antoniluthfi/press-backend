@@ -14,9 +14,9 @@ exports.getAllUserCourses = async (req, res) => {
     user_id = "",
     include_upcoming_schedule = 0,
     include_attendance_recap = 0,
-  } = req.query; // Mengambil query params
+  } = req.query;
 
-  const offset = (page - 1) * limit; // Menghitung offset untuk pagination
+  const offset = (page - 1) * limit;
 
   try {
     const currentAcademicYear = getCurrentAcademicYear();
@@ -99,18 +99,26 @@ exports.getAllUserCourses = async (req, res) => {
     ];
 
     if (course_id) {
-      params.push(course_id); // Menambahkan filter course_id jika ada
+      params.push(course_id);
     }
 
     if (user_id) {
-      params.push(user_id); // Menambahkan filter user_id jika ada
+      params.push(user_id);
     }
 
     params.push(Number(limit), Number(offset));
 
     const [rows] = await db.promise().query(baseQuery, params);
 
-    // Mengambil total data untuk keperluan pagination
+    // Parse JSON strings if include_attendance_recap is true
+    if (Number(include_attendance_recap)) {
+      rows.forEach((row) => {
+        if (row.attendance_recap) {
+          row.attendance_recap = JSON.parse(row.attendance_recap);
+        }
+      });
+    }
+
     const countQuery = `
       SELECT COUNT(*) AS total 
       FROM user_courses
@@ -131,11 +139,11 @@ exports.getAllUserCourses = async (req, res) => {
     ];
 
     if (course_id) {
-      countParams.push(course_id); // Menambahkan filter course_id jika ada
+      countParams.push(course_id);
     }
 
     if (user_id) {
-      countParams.push(user_id); // Menambahkan filter user_id jika ada
+      countParams.push(user_id);
     }
 
     const [totalRows] = await db.promise().query(countQuery, countParams);
