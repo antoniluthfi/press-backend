@@ -13,6 +13,7 @@ exports.getAllUserCourses = async (req, res) => {
     course_id = "",
     user_id = "",
     include_upcoming_schedule = 0,
+    include_attendance_recap = 0,
   } = req.query; // Mengambil query params
 
   const offset = (page - 1) * limit; // Menghitung offset untuk pagination
@@ -47,6 +48,37 @@ exports.getAllUserCourses = async (req, res) => {
           ORDER BY CONCAT(cm.date, ' ', cm.start_time) ASC
           LIMIT 1
         ) AS upcoming_schedule` : ''}
+        ${Number(include_attendance_recap) ? `,
+        (
+          SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'meeting_number', cm.meeting_number,
+              'is_past', 
+                CASE 
+                  WHEN CONCAT(cm.date, ' ', cm.end_time) < NOW() THEN true
+                  ELSE false
+                END,
+              'attendance_record', (
+                SELECT JSON_OBJECT(
+                    'id', ar.id,
+                    'student_id', ar.student_id,
+                    'attendance_time', ar.attendance_time,
+                    'latitude', ar.latitude,
+                    'longitude', ar.longitude,
+                    'status', ar.status,
+                    'remarks', ar.remarks,
+                    'file_path', ar.file_path
+                )
+                FROM attendance_records ar
+                WHERE ar.course_meeting_id = cm.id
+                AND ar.student_id = user_id
+              )
+            )
+          )
+          FROM course_meetings cm
+          WHERE cm.course_id = courses.id
+          ORDER BY cm.meeting_number ASC
+        ) AS attendance_recap` : ''}
       FROM user_courses
       JOIN users ON user_courses.user_id = users.id
       JOIN courses ON user_courses.course_id = courses.id
