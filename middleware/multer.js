@@ -26,6 +26,11 @@ const uploadUserProfileImage = multer({
   storage: createStorage("user-profiles"),
 });
 
+const uploadAttendanceRecordFile = multer({
+  storage: createStorage("attendance-records"),
+});
+
 module.exports = {
   uploadUserProfileImage,
+  uploadAttendanceRecordFile,
 };

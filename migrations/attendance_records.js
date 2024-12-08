@@ -6,12 +6,14 @@ const up = () => {
       `
         CREATE TABLE attendance_records (
           id INT AUTO_INCREMENT PRIMARY KEY,
-          session_id INT NOT NULL,
+          course_meeting_id INT NOT NULL,
           student_id INT NOT NULL,
           attendance_time DATETIME NOT NULL,
           latitude DECIMAL(10, 8) NOT NULL,
           longitude DECIMAL(11, 8) NOT NULL,
           status ENUM('present', 'permission', 'sick', 'absent') DEFAULT 'absent' NOT NULL,
+          remarks TEXT DEFAULT NULL,
+          file_path VARCHAR(255) DEFAULT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         );

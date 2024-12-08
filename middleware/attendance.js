@@ -2,11 +2,16 @@ const { body } = require("express-validator");
 
 exports.recordAttendanceValidator = [
   body("qr_code").notEmpty().withMessage("QR Code is required"),
-  body("session_id")
+  body("course_id")
     .notEmpty()
-    .withMessage("Session ID is required")
+    .withMessage("Course ID is required")
     .isInt()
-    .withMessage("Session ID must be an integer"),
+    .withMessage("Course ID must be an integer"),
+  body("course_meeting_id")
+    .notEmpty()
+    .withMessage("Course Meeting ID is required")
+    .isInt()
+    .withMessage("Course Meeting ID must be an integer"),
   body("student_id")
     .notEmpty()
     .withMessage("Student ID is required")
@@ -22,4 +27,5 @@ exports.recordAttendanceValidator = [
     .withMessage("Longitude is required")
     .isFloat({ min: -180, max: 180 })
     .withMessage("Longitude must be a number between -180 and 180"),
+  body("status").notEmpty().withMessage("Status is required"),
 ];

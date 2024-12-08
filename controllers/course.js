@@ -4,7 +4,13 @@ const { validationResult } = require("express-validator");
 // Mendapatkan semua course
 exports.getAllCourses = async (req, res) => {
   try {
-    const { page = 1, limit = 5, search = "", lecturer_id = "" } = req.query;
+    const {
+      page = 1,
+      limit = 5,
+      search = "",
+      lecturer_id = "",
+      include_upcoming_schedule = 0,
+    } = req.query;
     const offset = (page - 1) * limit;
 
     // Query untuk search dan pagination
@@ -13,6 +19,21 @@ exports.getAllCourses = async (req, res) => {
         courses.*,
         users.name AS lecturer_name,
         locations.name AS location_name
+        ${Number(include_upcoming_schedule) ? `,
+        (
+          SELECT JSON_OBJECT(
+            'id', cm.id,
+            'meeting_number', cm.meeting_number,
+            'date', cm.date,
+            'start_time', cm.start_time,
+            'end_time', cm.end_time
+          )
+          FROM course_meetings cm
+          WHERE cm.course_id = courses.id
+            AND CONCAT(cm.date, ' ', cm.end_time) > NOW()
+          ORDER BY CONCAT(cm.date, ' ', cm.start_time) ASC
+          LIMIT 1
+        ) AS upcoming_schedule` : ''}
       FROM courses
       JOIN users ON courses.lecturer_id = users.id
       JOIN locations ON courses.location_id = locations.id
@@ -40,9 +61,15 @@ exports.getAllCourses = async (req, res) => {
     const countQuery = `
       SELECT COUNT(*) AS total
       FROM courses
-      ${lecturer_id ? "WHERE name LIKE ? AND lecturer_id = ?" : "WHERE name LIKE ?"}
+      ${
+        lecturer_id
+          ? "WHERE name LIKE ? AND lecturer_id = ?"
+          : "WHERE name LIKE ?"
+      }
     `;
-    const countParams = lecturer_id ? [searchQuery, lecturer_id] : [searchQuery];
+    const countParams = lecturer_id
+      ? [searchQuery, lecturer_id]
+      : [searchQuery];
     const [totalRows] = await db.promise().query(countQuery, countParams);
 
     const total = totalRows[0].total;
@@ -78,9 +105,7 @@ exports.getCourseById = async (req, res) => {
       WHERE courses.id = ?
     `;
 
-    const [courseRows] = await db
-      .promise()
-      .query(query, [id]);
+    const [courseRows] = await db.promise().query(query, [id]);
     if (courseRows.length === 0) {
       return res.status(404).json({ error: "Course not found" });
     }
@@ -161,7 +186,9 @@ exports.updateCourse = async (req, res) => {
 
   const { id } = req.params;
   const { name, code, lecturer_id, location_id, meetings } = req.body;
+
   try {
+    // Update course data
     const [result] = await db
       .promise()
       .query(
@@ -172,10 +199,18 @@ exports.updateCourse = async (req, res) => {
       return res.status(404).json({ error: "Course not found" });
     }
 
-    await db
+    // Retrieve existing course meetings
+    const [existingMeetings] = await db
       .promise()
-      .query("DELETE FROM course_meetings WHERE course_id = ?", [id]);
+      .query("SELECT id FROM course_meetings WHERE course_id = ?", [id]);
 
+    // Store mapping of old meeting IDs for updating attendance_records
+    const oldMeetingIds = existingMeetings.map((meeting) => meeting.id);
+
+    // Delete old course meetings
+    await db.promise().query("DELETE FROM course_meetings WHERE course_id = ?", [id]);
+
+    // Insert new course meetings
     if (meetings && meetings.length > 0) {
       const meetingValues = meetings.map((meeting) => [
         id,
@@ -185,12 +220,29 @@ exports.updateCourse = async (req, res) => {
         meeting.end_time,
       ]);
 
-      await db
+      const [insertResult] = await db
         .promise()
         .query(
           "INSERT INTO course_meetings (course_id, meeting_number, date, start_time, end_time) VALUES ?",
           [meetingValues]
         );
+
+      const newMeetingIds = Array.from(
+        { length: insertResult.affectedRows },
+        (_, i) => insertResult.insertId + i
+      );
+
+      // Update attendance_records with new course_meeting_ids
+      for (let i = 0; i < oldMeetingIds.length; i++) {
+        if (newMeetingIds[i]) {
+          await db
+            .promise()
+            .query(
+              "UPDATE attendance_records SET course_meeting_id = ? WHERE course_meeting_id = ?",
+              [newMeetingIds[i], oldMeetingIds[i]]
+            );
+        }
+      }
     }
 
     await db.promise().commit();
@@ -214,7 +266,9 @@ exports.deleteCourse = async (req, res) => {
       return res.status(404).json({ error: "Course not found" });
     }
 
-    await db.promise().query("DELETE FROM course_meetings WHERE course_id = ?", [id]);
+    await db
+      .promise()
+      .query("DELETE FROM course_meetings WHERE course_id = ?", [id]);
 
     await db.promise().commit();
     res.json({ message: "Course deleted successfully" });

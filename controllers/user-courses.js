@@ -12,6 +12,7 @@ exports.getAllUserCourses = async (req, res) => {
     search = "",
     course_id = "",
     user_id = "",
+    include_upcoming_schedule = 0,
   } = req.query; // Mengambil query params
 
   const offset = (page - 1) * limit; // Menghitung offset untuk pagination
@@ -20,16 +21,32 @@ exports.getAllUserCourses = async (req, res) => {
     const currentAcademicYear = getCurrentAcademicYear();
     const currentSemester = getCurrentSemester();
 
-    const query = `
+    const baseQuery = `
       SELECT 
         user_courses.id,
         user_id,
         users.name AS user_name, 
+        users.identification_number,
         users.role,
         course_id, 
         courses.name AS course_name,
         academic_year,
         semester
+        ${Number(include_upcoming_schedule) ? `,
+        (
+          SELECT JSON_OBJECT(
+            'id', cm.id,
+            'meeting_number', cm.meeting_number,
+            'date', cm.date,
+            'start_time', cm.start_time,
+            'end_time', cm.end_time
+          )
+          FROM course_meetings cm
+          WHERE cm.course_id = courses.id
+            AND CONCAT(cm.date, ' ', cm.end_time) > NOW()
+          ORDER BY CONCAT(cm.date, ' ', cm.start_time) ASC
+          LIMIT 1
+        ) AS upcoming_schedule` : ''}
       FROM user_courses
       JOIN users ON user_courses.user_id = users.id
       JOIN courses ON user_courses.course_id = courses.id
@@ -39,7 +56,8 @@ exports.getAllUserCourses = async (req, res) => {
         ${course_id ? "AND course_id = ?" : ""}
         ${user_id ? "AND user_id = ?" : ""}
       ORDER BY user_courses.id DESC
-      LIMIT ? OFFSET ?`;
+      LIMIT ? OFFSET ?;
+    `;
 
     const params = [
       currentAcademicYear,
@@ -57,7 +75,8 @@ exports.getAllUserCourses = async (req, res) => {
     }
 
     params.push(Number(limit), Number(offset));
-    const [rows] = await db.promise().query(query, params);
+
+    const [rows] = await db.promise().query(baseQuery, params);
 
     // Mengambil total data untuk keperluan pagination
     const countQuery = `
@@ -69,7 +88,8 @@ exports.getAllUserCourses = async (req, res) => {
         AND user_courses.semester = ?
         AND (users.name LIKE ? OR courses.name LIKE ?)
         ${course_id ? "AND course_id = ?" : ""}
-        ${user_id ? "AND user_id = ?" : ""}`;
+        ${user_id ? "AND user_id = ?" : ""}
+    `;
 
     const countParams = [
       currentAcademicYear,
