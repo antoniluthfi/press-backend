@@ -7,11 +7,14 @@ const removeFile = require("../utils/remove-file");
 // Mengambil semua record presensi (untuk data rekapan)
 exports.getAllRecords = async (req, res) => {
   try {
-    // Ambil query parameter untuk filter course_meeting_id
-    const { course_meeting_id } = req.query;
+    // Ambil query parameter untuk filter course_meeting_id, user_id, dan pagination
+    const { course_meeting_id, user_id, page = 1, limit = 10 } = req.query;
 
-    // Bangun query SQL dengan kondisi optional berdasarkan course_meeting_id
-    const sql = `
+    // Hitung offset untuk pagination
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    // Bangun query SQL dengan kondisi optional berdasarkan course_meeting_id dan user_id
+    let sql = `
       SELECT 
         attendance_records.*,
         users.id AS student_id,
@@ -19,17 +22,40 @@ exports.getAllRecords = async (req, res) => {
         users.identification_number AS student_identification_number
       FROM attendance_records
       JOIN users ON attendance_records.student_id = users.id
-      ${
-        course_meeting_id
-          ? "WHERE attendance_records.course_meeting_id = ?"
-          : ""
-      }
     `;
 
-    // Eksekusi query dengan parameter jika ada course_meeting_id
-    const [rows] = await db
-      .promise()
-      .query(sql, course_meeting_id ? [course_meeting_id] : []);
+    const conditions = [];
+    const params = [];
+
+    if (course_meeting_id) {
+      conditions.push("attendance_records.course_meeting_id = ?");
+      params.push(course_meeting_id);
+    }
+
+    if (user_id) {
+      conditions.push("attendance_records.student_id = ?");
+      params.push(user_id);
+    }
+
+    if (conditions.length > 0) {
+      sql += `WHERE ${conditions.join(" AND ")}`;
+    }
+
+    // Query untuk menghitung total data
+    let countSql = `SELECT COUNT(*) AS total FROM attendance_records JOIN users ON attendance_records.student_id = users.id`;
+    if (conditions.length > 0) {
+      countSql += ` WHERE ${conditions.join(" AND ")}`;
+    }
+    const [countRows] = await db.promise().query(countSql, params.slice(0, conditions.length));
+    const totalItems = countRows[0].total;
+    const totalPages = Math.ceil(totalItems / parseInt(limit));
+
+    // Tambahkan LIMIT dan OFFSET untuk pagination
+    sql += ` LIMIT ? OFFSET ?`;
+    params.push(parseInt(limit), offset);
+
+    // Eksekusi query dengan parameter jika ada kondisi
+    const [rows] = await db.promise().query(sql, params);
 
     const sessions = rows.map((row) => ({
       id: row.id,
@@ -52,6 +78,12 @@ exports.getAllRecords = async (req, res) => {
     res.json({
       message: "Data retrieved successfully",
       data: sessions,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: totalPages,
+        totalItems: totalItems,
+        itemsPerPage: parseInt(limit),
+      },
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
