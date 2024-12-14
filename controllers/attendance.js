@@ -13,15 +13,23 @@ exports.getAllRecords = async (req, res) => {
     // Hitung offset untuk pagination
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
-    // Bangun query SQL dengan kondisi optional berdasarkan course_meeting_id dan user_id
+    // Bangun query SQL dengan join ke course_meetings dan courses
     let sql = `
       SELECT 
         attendance_records.*,
         users.id AS student_id,
         users.name AS student_name,
-        users.identification_number AS student_identification_number
+        users.identification_number AS student_identification_number,
+        course_meetings.id AS meeting_id,
+        course_meetings.meeting_number,
+        course_meetings.date AS meeting_date,
+        courses.id AS course_id,
+        courses.name AS course_name,
+        courses.code AS course_code
       FROM attendance_records
       JOIN users ON attendance_records.student_id = users.id
+      JOIN course_meetings ON attendance_records.course_meeting_id = course_meetings.id
+      JOIN courses ON course_meetings.course_id = courses.id
     `;
 
     const conditions = [];
@@ -38,11 +46,17 @@ exports.getAllRecords = async (req, res) => {
     }
 
     if (conditions.length > 0) {
-      sql += `WHERE ${conditions.join(" AND ")}`;
+      sql += ` WHERE ${conditions.join(" AND ")}`;
     }
 
     // Query untuk menghitung total data
-    let countSql = `SELECT COUNT(*) AS total FROM attendance_records JOIN users ON attendance_records.student_id = users.id`;
+    let countSql = `
+      SELECT COUNT(*) AS total 
+      FROM attendance_records 
+      JOIN users ON attendance_records.student_id = users.id
+      JOIN course_meetings ON attendance_records.course_meeting_id = course_meetings.id
+      JOIN courses ON course_meetings.course_id = courses.id
+    `;
     if (conditions.length > 0) {
       countSql += ` WHERE ${conditions.join(" AND ")}`;
     }
@@ -63,6 +77,16 @@ exports.getAllRecords = async (req, res) => {
       longitude: row.longitude,
       latitude: row.latitude,
       course_meeting_id: row.course_meeting_id,
+      meeting: {
+        id: row.meeting_id,
+        meeting_number: row.meeting_number,
+        date: row.meeting_date,
+        course: {
+          id: row.course_id,
+          name: row.course_name,
+          code: row.course_code,
+        },
+      },
       status: row.status,
       remarks: row.remarks,
       file_path: row.file_path,
