@@ -49,6 +49,13 @@ exports.getAllRecords = async (req, res) => {
       sql += ` WHERE ${conditions.join(" AND ")}`;
     }
 
+    // Tambahkan ORDER BY untuk sorting berdasarkan created_at
+    sql += ` ORDER BY attendance_records.created_at DESC`;
+
+    // Tambahkan LIMIT dan OFFSET untuk pagination
+    sql += ` LIMIT ? OFFSET ?`;
+    params.push(parseInt(limit), offset);
+
     // Query untuk menghitung total data
     let countSql = `
       SELECT COUNT(*) AS total 
@@ -60,17 +67,18 @@ exports.getAllRecords = async (req, res) => {
     if (conditions.length > 0) {
       countSql += ` WHERE ${conditions.join(" AND ")}`;
     }
-    const [countRows] = await db.promise().query(countSql, params.slice(0, conditions.length));
+
+    // Eksekusi query
+    const [countRows] = await db
+      .promise()
+      .query(countSql, params.slice(0, conditions.length));
     const totalItems = countRows[0].total;
     const totalPages = Math.ceil(totalItems / parseInt(limit));
 
-    // Tambahkan LIMIT dan OFFSET untuk pagination
-    sql += ` LIMIT ? OFFSET ?`;
-    params.push(parseInt(limit), offset);
-
-    // Eksekusi query dengan parameter jika ada kondisi
+    // Eksekusi query utama
     const [rows] = await db.promise().query(sql, params);
 
+    // Mapping data
     const sessions = rows.map((row) => ({
       id: row.id,
       attendance_time: row.attendance_time,
@@ -134,39 +142,40 @@ exports.recordAttendance = async (req, res) => {
   const attendanceTime = new Date();
 
   try {
-    // Ambil QR code yang ada dari database
-    const [rowsQrCode] = await db
-      .promise()
-      .query("SELECT * FROM qr_codes WHERE qr_code = ?", [qr_code]);
+    if (status === "present") {
+      // Ambil QR code yang ada dari database
+      const [rowsQrCode] = await db
+        .promise()
+        .query("SELECT * FROM qr_codes WHERE qr_code = ?", [qr_code]);
 
-    if (rowsQrCode.length === 0) {
-      removeFile(req.file?.path);
-      return res.status(404).json({ message: "Invalid QR Code" });
-    }
+      if (rowsQrCode.length === 0) {
+        removeFile(req.file?.path);
+        return res.status(404).json({ message: "Invalid QR Code" });
+      }
 
-    // Bandingkan expiration time
-    const qrCodeExpirationTime = new Date(rowsQrCode[0].expiration_time);
-    if (attendanceTime > qrCodeExpirationTime) {
-      removeFile(req.file?.path);
-      return res.status(400).json({ message: "QR Code has expired" });
-    }
+      // Bandingkan expiration time
+      const qrCodeExpirationTime = new Date(rowsQrCode[0].expiration_time);
+      if (attendanceTime > qrCodeExpirationTime) {
+        removeFile(req.file?.path);
+        return res.status(400).json({ message: "QR Code has expired" });
+      }
 
-    // Validasi apakah sudah melakukan absensi atau belum
-    const [rowsAttendance] = await db
-      .promise()
-      .query(
-        "SELECT * FROM attendance_records WHERE course_meeting_id = ? AND student_id = ? AND status = ?",
-        [course_meeting_id, student_id, "present"]
-      );
+      // Validasi apakah sudah melakukan absensi atau belum
+      const [rowsAttendance] = await db
+        .promise()
+        .query(
+          "SELECT * FROM attendance_records WHERE course_meeting_id = ? AND student_id = ? AND status = ?",
+          [course_meeting_id, student_id, "present"]
+        );
 
-    if (rowsAttendance.length > 0) {
-      removeFile(req.file?.path);
-      return res.status(400).json({ message: "Attendance already recorded" });
-    }
+      if (rowsAttendance.length > 0) {
+        removeFile(req.file?.path);
+        return res.status(400).json({ message: "Attendance already recorded" });
+      }
 
-    // Ambil titik koordinat lokasi
-    const [rowsCourse] = await db.promise().query(
-      `
+      // Ambil titik koordinat lokasi
+      const [rowsCourse] = await db.promise().query(
+        `
         SELECT 
           courses.id, 
           locations.latitude, 
@@ -176,38 +185,39 @@ exports.recordAttendance = async (req, res) => {
         LEFT JOIN locations ON courses.location_id = locations.id
         WHERE courses.id = ?
       `,
-      [course_id]
-    );
+        [course_id]
+      );
 
-    if (rowsCourse.length === 0) {
-      removeFile(req.file?.path);
-      return res.status(404).json({ message: "Session not found" });
-    }
+      if (rowsCourse.length === 0) {
+        removeFile(req.file?.path);
+        return res.status(404).json({ message: "Session not found" });
+      }
 
-    const distance = haversineDistance({
-      lat1: Number(rowsCourse[0].latitude),
-      lon1: Number(rowsCourse[0].longitude),
-      lat2: Number(latitude),
-      lon2: Number(longitude),
-    });
+      const distance = haversineDistance({
+        lat1: Number(rowsCourse[0].latitude),
+        lon1: Number(rowsCourse[0].longitude),
+        lat2: Number(latitude),
+        lon2: Number(longitude),
+      });
 
-    // Periksa radius lokasi
-    if (distance > Number(rowsCourse[0].radius)) {
-      removeFile(req.file?.path);
-      return res.status(400).json({ message: "Location is out of range" });
-    }
+      // Periksa radius lokasi
+      if (distance > Number(rowsCourse[0].radius)) {
+        removeFile(req.file?.path);
+        return res.status(400).json({ message: "Location is out of range" });
+      }
 
-    // Periksa data student
-    const [rowsStudent] = await db
-      .promise()
-      .query("SELECT * FROM users WHERE id = ? AND role = ?", [
-        student_id,
-        "student",
-      ]);
+      // Periksa data student
+      const [rowsStudent] = await db
+        .promise()
+        .query("SELECT * FROM users WHERE id = ? AND role = ?", [
+          student_id,
+          "student",
+        ]);
 
-    if (rowsStudent.length === 0) {
-      removeFile(req.file?.path);
-      return res.status(404).json({ message: "Student not found" });
+      if (rowsStudent.length === 0) {
+        removeFile(req.file?.path);
+        return res.status(404).json({ message: "Student not found" });
+      }
     }
 
     await db
