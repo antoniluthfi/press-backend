@@ -8,6 +8,7 @@ const locationRoutes = require("./location");
 const qrCodeRoutes = require("./qr-code");
 const userRoutes = require("./user");
 const userCourseRoutes = require("./user-course");
+const scrapeController = require("./scrape");
 
 const authMiddleware = require("../middleware/auth");
 
@@ -18,5 +19,6 @@ router.use("/location", authMiddleware.verifyToken, locationRoutes);
 router.use("/qr-code", authMiddleware.verifyToken, qrCodeRoutes);
 router.use("/user", authMiddleware.verifyToken, userRoutes);
 router.use("/user-course", authMiddleware.verifyToken, userCourseRoutes);
+router.use("/scrape", authMiddleware.verifyToken, scrapeController);
 
 module.exports = router;
