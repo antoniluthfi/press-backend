@@ -3,11 +3,51 @@ const { validationResult } = require("express-validator");
 
 exports.getAllLocations = async (req, res) => {
   try {
-    const [rows] = await db.promise().query("SELECT * FROM locations");
+    // Ambil query parameter dari request
+    const { page = 1, limit = 10, search = "" } = req.query;
 
+    // Validasi input page dan limit
+    const pageNumber = parseInt(page, 10) || 1;
+    const limitNumber = parseInt(limit, 10) || 10;
+    const offset = (pageNumber - 1) * limitNumber;
+
+    // Query database dengan filter search dan pagination
+    const query = `
+      SELECT * 
+      FROM locations 
+      WHERE name LIKE ? 
+      LIMIT ? OFFSET ?
+    `;
+
+    const searchValue = `%${search}%`;
+
+    // Eksekusi query
+    const [rows] = await db
+      .promise()
+      .query(query, [searchValue, limitNumber, offset]);
+
+    // Query untuk menghitung total data (untuk pagination)
+    const countQuery = `
+      SELECT COUNT(*) AS total 
+      FROM locations 
+      WHERE name LIKE ?
+    `;
+
+    const [[{ total }]] = await db.promise().query(countQuery, [searchValue]);
+
+    // Menghitung total halaman
+    const totalPages = Math.ceil(total / limitNumber);
+
+    // Mengirimkan response
     res.json({
-      message: "Data retrieved successfuly",
+      message: "Data retrieved successfully",
       data: rows,
+      pagination: {
+        currentPage: pageNumber,
+        totalPages: totalPages,
+        totalItems: total,
+        itemsPerPage: limitNumber,
+      },
     });
   } catch (error) {
     res.status(500).json({ error: error.message });

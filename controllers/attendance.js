@@ -7,8 +7,14 @@ const removeFile = require("../utils/remove-file");
 // Mengambil semua record presensi (untuk data rekapan)
 exports.getAllRecords = async (req, res) => {
   try {
-    // Ambil query parameter untuk filter course_meeting_id, user_id, dan pagination
-    const { course_meeting_id, user_id, page = 1, limit = 10 } = req.query;
+    // Ambil query parameter untuk filter course_meeting_id, user_id, search, dan pagination
+    const { 
+      course_meeting_id, 
+      user_id, 
+      search, // Tambahkan query parameter search
+      page = 1, 
+      limit = 10 
+    } = req.query;
 
     // Hitung offset untuk pagination
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -35,16 +41,31 @@ exports.getAllRecords = async (req, res) => {
     const conditions = [];
     const params = [];
 
+    // Filter berdasarkan course_meeting_id
     if (course_meeting_id) {
       conditions.push("attendance_records.course_meeting_id = ?");
       params.push(course_meeting_id);
     }
 
+    // Filter berdasarkan user_id
     if (user_id) {
       conditions.push("attendance_records.student_id = ?");
       params.push(user_id);
     }
 
+    // Filter berdasarkan kata kunci search
+    if (search) {
+      conditions.push(`
+        (
+          courses.name LIKE ? OR 
+          attendance_records.remarks LIKE ?
+        )
+      `);
+      // Tambahkan '%' di sekitar kata kunci untuk operasi LIKE
+      params.push(`%${search}%`, `%${search}%`);
+    }
+
+    // Tambahkan kondisi WHERE jika ada filter
     if (conditions.length > 0) {
       sql += ` WHERE ${conditions.join(" AND ")}`;
     }
@@ -64,6 +85,7 @@ exports.getAllRecords = async (req, res) => {
       JOIN course_meetings ON attendance_records.course_meeting_id = course_meetings.id
       JOIN courses ON course_meetings.course_id = courses.id
     `;
+
     if (conditions.length > 0) {
       countSql += ` WHERE ${conditions.join(" AND ")}`;
     }
@@ -71,7 +93,7 @@ exports.getAllRecords = async (req, res) => {
     // Eksekusi query
     const [countRows] = await db
       .promise()
-      .query(countSql, params.slice(0, conditions.length));
+      .query(countSql, params.slice(0, params.length - 2)); // Exclude LIMIT and OFFSET
     const totalItems = countRows[0].total;
     const totalPages = Math.ceil(totalItems / parseInt(limit));
 
@@ -107,6 +129,7 @@ exports.getAllRecords = async (req, res) => {
       updated_at: row.updated_at,
     }));
 
+    // Kirim response
     res.json({
       message: "Data retrieved successfully",
       data: sessions,
