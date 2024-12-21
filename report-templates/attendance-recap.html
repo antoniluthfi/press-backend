@@ -7,55 +7,70 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
     rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
+
   <style>
     body {
       font-family: "Poppins", serif;
+      font-size: 12px;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    h3 {
+      font-size: 14px;
+      margin: 0;
+      padding: 0;
+      font-weight: normal;
     }
 
     table {
-      border-collapse: collapse;
       width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
     }
 
-    th,
-    td {
+    th, td {
       border: 1px solid #ddd;
       text-align: center;
       padding: 8px;
+      font-size: 12px;
     }
 
     th {
-      background-color: #f5f5f5;
+      background-color: #f0f0f0;
+      font-weight: bold;
     }
 
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+
+    .text-sm {
+      font-size: 12px;
+    }
   </style>
 </head>
 
 <body>
-  <h1 class="text-lg font-bold">Rekap Presensi</h1>
-  <div class="flex items-center w-full py-4">
-    <div class="w-1/5">
-      <h3 class="text-base p-0 m-0">Tahun Ajaran</h3>
-      <h3 class="text-base p-0 m-0">Semester</h3>
-      <h3 class="text-base p-0 m-0">Mata Kuliah</h3>  
-    </div>
-    <div>
-      <h3 class="text-base p-0 m-0">: {{academicYear}}</h3>
-      <h3 class="text-base p-0 m-0">: {{semester}}</h3>
-      <h3 class="text-base p-0 m-0">: {{courseName}}</h3>  
-    </div>
+  <h1>Rekap Presensi</h1>
+  <div>
+    <h3><b>Tahun Ajaran:</b> {{academicYear}}</h3>
+    <h3><b>Semester:</b> {{semester}}</h3>
+    <h3><b>Mata Kuliah:</b> {{courseName}}</h3>  
   </div>
 
   <table>
     <thead>
       <tr>
-        <th rowSpan="2" class="text-sm">No.</th>
-        <th rowSpan="2" class="text-sm">Nama Lengkap</th>
-        <th rowSpan="2" class="text-sm">NIM</th>
+        <th rowspan="2" class="text-sm">No.</th>
+        <th rowspan="2" class="text-sm">Nama Lengkap</th>
+        <th rowspan="2" class="text-sm">NIM</th>
         <th colspan="16" class="text-sm">Pertemuan</th>
       </tr>
       <tr>

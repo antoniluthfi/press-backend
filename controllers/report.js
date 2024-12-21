@@ -1,4 +1,3 @@
-const puppeteer = require("puppeteer");
 const fs = require("fs");
 const path = require("path");
 const {
@@ -7,6 +6,7 @@ const {
 } = require("../utils/generate-current-academic-year");
 const db = require("../config/db");
 const { validationResult } = require("express-validator");
+const pdf = require('html-pdf');
 
 const getAllUserCourses = async ({
   page = 1,
@@ -306,29 +306,33 @@ exports.generateAttendanceRecapReport = async (req, res) => {
     );
     htmlContent = htmlContent.replace("{{content}}", tableRows);
 
-    // Launch Puppeteer untuk membuat PDF
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: "load" });
+    // Generate PDF menggunakan html-pdf
+    const options = {
+      format: 'A4',
+      orientation: 'landscape',
+      border: {
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm',
+      },
+    };
 
-    // Render PDF ke dalam buffer
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" },
-      landscape: true,
+    pdf.create(htmlContent, options).toBuffer((err, buffer) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Failed to generate PDF" });
+      }
+      
+      // Kirim PDF sebagai response
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="attendance_report.pdf"'
+      );
+      res.end(buffer);
     });
 
-    await browser.close();
-
-    // Kirim PDF sebagai response
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="attendance_report.pdf"'
-    );
-
-    res.end(pdfBuffer);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to generate PDF" });
@@ -417,29 +421,34 @@ exports.generateAttendanceRecapPerUserReport = async (req, res) => {
     );
     htmlContent = htmlContent.replace("{{content}}", tableRows);
 
-    // Launch Puppeteer untuk membuat PDF
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: "load" });
-
-    // Render PDF ke dalam buffer
-    const pdfBuffer = await page.pdf({
+    // Konfigurasi opsi PDF
+    const pdfOptions = {
       format: "A4",
-      printBackground: true,
-      margin: { top: "10mm", right: "10mm", bottom: "10mm", left: "10mm" },
-      landscape: true,
+      orientation: "landscape",
+      border: {
+        top: "10mm",
+        right: "10mm",
+        bottom: "10mm",
+        left: "10mm",
+      },
+    };
+
+    // Buat PDF dari HTML
+    pdf.create(htmlContent, pdfOptions).toBuffer((err, buffer) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Failed to generate PDF" });
+      }
+      
+      // Kirim PDF sebagai response
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        'attachment; filename="attendance_report_per_user.pdf"'
+      );
+
+      res.end(buffer);
     });
-
-    await browser.close();
-
-    // Kirim PDF sebagai response
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="attendance_report_per_user.pdf"'
-    );
-
-    res.end(pdfBuffer);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to generate PDF" });
