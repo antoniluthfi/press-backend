@@ -59,7 +59,7 @@ exports.getAllCourses = async (req, res) => {
 
     // Parse JSON strings menjadi objects
     rows.forEach((row) => {
-      if (row.upcoming_schedule) {
+      if (row.upcoming_schedule && typeof row.upcoming_schedule === "string") {
         row.upcoming_schedule = JSON.parse(row.upcoming_schedule);
       }
     });
