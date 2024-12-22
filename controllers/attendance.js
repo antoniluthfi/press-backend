@@ -7,11 +7,12 @@ const removeFile = require("../utils/remove-file");
 // Mengambil semua record presensi (untuk data rekapan)
 exports.getAllRecords = async (req, res) => {
   try {
-    // Ambil query parameter untuk filter course_meeting_id, user_id, search, dan pagination
+    // Ambil query parameter untuk filter course_meeting_id, user_id, course_id, search, dan pagination
     const { 
       course_meeting_id, 
       user_id, 
-      search, // Tambahkan query parameter search
+      course_id,
+      search, 
       page = 1, 
       limit = 10 
     } = req.query;
@@ -51,6 +52,12 @@ exports.getAllRecords = async (req, res) => {
     if (user_id) {
       conditions.push("attendance_records.student_id = ?");
       params.push(user_id);
+    }
+
+    // Filter berdasarkan course_id
+    if (course_id) {
+      conditions.push("courses.id = ?");
+      params.push(course_id);
     }
 
     // Filter berdasarkan kata kunci search
