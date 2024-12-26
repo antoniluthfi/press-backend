@@ -45,3 +45,32 @@ exports.sendUserLoginCredentialEmail = ({ emailDestination, password }) => {
     console.log("sendUserLoginCredentialEmail", error);
   }
 };
+
+exports.sendForgotPasswordEmail = ({ emailDestination, password }) => {
+  try {
+    const emailTemplatePath = path.join(
+      emailTemplateFolder,
+      "forgot-password/index.html"
+    );
+    const newUserTemplate = fs.readFileSync(emailTemplatePath, "utf-8");
+
+    const mailOptions = {
+      from: process.env.EMAIL_SENDER,
+      to: emailDestination,
+      subject: "Lupa Password",
+      html: newUserTemplate
+        .replace("{{email}}", emailDestination)
+        .replace("{{password}}", password),
+    };
+
+    transporter.sendMail(mailOptions, function (error, info) {
+      if (error) {
+        console.log(error);
+      } else {
+        console.log("Email sent: " + info.response);
+      }
+    });
+  } catch (error) {
+    console.log("sendForgotPasswordEmail", error);
+  }
+};

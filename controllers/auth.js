@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const { COOKIE_SETTINGS } = require("../utils/constants");
+const { generateRandomString } = require("../utils/generate-random-string");
+const { sendForgotPasswordEmail } = require("./email");
 require("dotenv").config();
 
 // Register (untuk membuat user mahasiswa baru)
@@ -211,6 +213,48 @@ exports.logout = async (req, res) => {
     res.clearCookie("token", COOKIE_SETTINGS);
     res.clearCookie("refresh_token", COOKIE_SETTINGS);
     res.json({ message: "Berhasil logout" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.forgotPassword = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { email } = req.body;
+
+  try {
+    const [rows] = await db
+      .promise()
+      .query("SELECT id, status FROM users WHERE email = ?", [email]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const user = rows[0];
+    if (user.status === "inactive") {
+      return res.status(404).json({ error: "User is inactive" });
+    }
+
+    const password = generateRandomString(8); // Panjang string random
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await db
+      .promise()
+      .query("UPDATE users SET password = ? WHERE id = ?", [
+        hashedPassword,
+        user.id,
+      ]);
+
+    sendForgotPasswordEmail({ emailDestination: email, password });
+
+    res.status(200).json({
+      message: "Berhasil mengirimkan email",
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

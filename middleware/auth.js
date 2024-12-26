@@ -63,3 +63,11 @@ exports.loginValidator = [
     .isIn(["app", "portal"])
     .withMessage("Scope must be either 'app' or 'portal'"),
 ];
+
+exports.forgotPasswordValidator = [
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Invalid email format"),
+];

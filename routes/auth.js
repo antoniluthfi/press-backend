@@ -5,6 +5,7 @@ const {
   registerValidator,
   loginValidator,
   verifyToken,
+  forgotPasswordValidator,
 } = require("../middleware/auth");
 
 // Rute untuk register
@@ -25,5 +26,12 @@ router.get(
 
 // Rute untuk logout
 router.get("/logout", verifyToken, authController.logout);
+
+// Rute untuk forgot password
+router.post(
+  "/forgot-password",
+  forgotPasswordValidator,
+  authController.forgotPassword
+);
 
 module.exports = router;
