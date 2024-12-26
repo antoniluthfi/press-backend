@@ -224,3 +224,34 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.resetUserDevice = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  try {
+    const [rows] = await db
+      .promise()
+      .query("SELECT * FROM users WHERE id = ?", [req.params.id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const [user] = await db
+      .promise()
+      .query(
+        "UPDATE users SET device_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        ["", req.params.id]
+      );
+    if (user.affectedRows === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({ message: "User updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

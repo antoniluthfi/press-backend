@@ -5,6 +5,7 @@ const {
   locationValidator,
   locationIdValidator,
 } = require("../middleware/location");
+const { uploadLocationImage } = require("../middleware/multer");
 
 // Rute untuk mendapatkan semua location
 router.get("/", locationController.getAllLocations);
@@ -13,10 +14,20 @@ router.get("/", locationController.getAllLocations);
 router.get("/:id", locationIdValidator, locationController.getLocationById);
 
 // Rute untuk membuat location baru
-router.post("/", locationValidator, locationController.createLocation);
+router.post(
+  "/",
+  uploadLocationImage.single('file'),
+  locationValidator,
+  locationController.createLocation
+);
 
 // Rute untuk mengupdate location
-router.put("/:id", locationValidator, locationController.updateLocation);
+router.post(
+  "/:id",
+  uploadLocationImage.single('file'),
+  locationValidator,
+  locationController.updateLocation
+);
 
 // Rute untuk menghapus location
 router.delete("/:id", locationIdValidator, locationController.deleteLocation);

@@ -58,6 +58,8 @@ exports.login = async (req, res) => {
   }
 
   const { email, password, scope } = req.body;
+  const deviceId = req.headers["x-device-id"];
+
   try {
     const isMobile = scope === "app";
     const roleQuery = isMobile ? "role = 'student'" : "role != 'student'";
@@ -69,6 +71,16 @@ exports.login = async (req, res) => {
     }
 
     const user = rows[0];
+    if (isMobile && user?.device_id) {
+      const validDeviceId = await bcrypt.compare(deviceId, user.device_id);
+      if (!validDeviceId) {
+        return res
+          .status(401)
+          .json({ error: "Please login using your own device" });
+      }
+    }
+    const hashedDeviceId = isMobile ? await bcrypt.hash(deviceId, 10) : "";
+
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       return res.status(404).json({ error: "Invalid email or password" });
@@ -97,8 +109,8 @@ exports.login = async (req, res) => {
     await db
       .promise()
       .query(
-        "UPDATE users SET token = ?, refresh_token = ?, ip_address = ? WHERE id = ?",
-        [token, refreshToken, ipAddress, user.id]
+        "UPDATE users SET token = ?, refresh_token = ?, ip_address = ?, device_id = ? WHERE id = ?",
+        [token, refreshToken, ipAddress, hashedDeviceId, user.id]
       );
 
     res.cookie("refresh_token", refreshToken, COOKIE_SETTINGS);

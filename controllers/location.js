@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const { validationResult } = require("express-validator");
+const removeFile = require("../utils/remove-file");
 
 exports.getAllLocations = async (req, res) => {
   try {
@@ -74,6 +75,7 @@ exports.getLocationById = async (req, res) => {
 exports.createLocation = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    removeFile(req.file?.path);
     return res.status(400).json({ errors: errors.array() });
   }
 
@@ -82,8 +84,8 @@ exports.createLocation = async (req, res) => {
     const [result] = await db
       .promise()
       .query(
-        "INSERT INTO locations (name, latitude, longitude, radius) VALUES (?, ?, ?, ?)",
-        [name, latitude, longitude, radius]
+        "INSERT INTO locations (name, latitude, longitude, radius, file_path) VALUES (?, ?, ?, ?, ?)",
+        [name, latitude, longitude, radius, req.file?.path]
       );
 
     res.status(201).json({
@@ -91,6 +93,7 @@ exports.createLocation = async (req, res) => {
       message: "Location created successfully",
     });
   } catch (error) {
+    removeFile(req.file?.path);
     res.status(500).json({ error: error.message });
   }
 };
@@ -98,22 +101,46 @@ exports.createLocation = async (req, res) => {
 exports.updateLocation = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    removeFile(req.file?.path);
     return res.status(400).json({ errors: errors.array() });
   }
 
   const { name, latitude, longitude, radius } = req.body;
+  const locationId = req.params.id;
+
   try {
+    // Cari data berdasarkan ID untuk mendapatkan file path lama
+    const [locationRows] = await db
+      .promise()
+      .query("SELECT file_path FROM locations WHERE id = ?", [locationId]);
+
+    if (locationRows.length === 0) {
+      removeFile(req.file?.path);
+      return res.status(404).json({ error: "Location not found" });
+    }
+
+    // Gunakan file path lama jika tidak ada file baru yang diunggah
+    let filePath = req.file?.path || locationRows[0].file_path;
+
     const [result] = await db
       .promise()
       .query(
-        "UPDATE locations SET name = ?, latitude = ?, longitude = ?, radius = ? WHERE id = ?",
-        [name, latitude, longitude, radius, req.params.id]
+        "UPDATE locations SET name = ?, latitude = ?, longitude = ?, radius = ?, file_path = ? WHERE id = ?",
+        [name, latitude, longitude, radius, filePath, locationId]
       );
-    if (result.affectedRows === 0)
+
+    if (result.affectedRows === 0) {
       return res.status(404).json({ error: "Location not found" });
+    }
+
+    // Hapus file lama jika file baru diunggah
+    if (req.file?.path && locationRows[0].file_path) {
+      removeFile(locationRows[0].file_path);
+    }
 
     res.json({ message: "Location updated successfully" });
   } catch (error) {
+    removeFile(req.file?.path);
     res.status(500).json({ error: error.message });
   }
 };
@@ -123,9 +150,7 @@ exports.deleteLocation = async (req, res) => {
     // Cek lokasi pada data lain
     const [rowsCourse] = await db
       .promise()
-      .query("SELECT id FROM courses WHERE location_id = ?", [
-        req.params.id,
-      ]);
+      .query("SELECT id FROM courses WHERE location_id = ?", [req.params.id]);
 
     if (rowsCourse.length) {
       return res

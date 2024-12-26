@@ -30,7 +30,12 @@ const uploadAttendanceRecordFile = multer({
   storage: createStorage("attendance-records"),
 });
 
+const uploadLocationImage = multer({
+  storage: createStorage("locations"),
+});
+
 module.exports = {
   uploadUserProfileImage,
   uploadAttendanceRecordFile,
+  uploadLocationImage,
 };

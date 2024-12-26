@@ -19,6 +19,7 @@ const up = () => {
           token VARCHAR(255),
           refresh_token VARCHAR(255),
           ip_address VARCHAR(45),
+          device_id VARCHAR(255) NOT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         );
