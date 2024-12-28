@@ -8,13 +8,13 @@ const removeFile = require("../utils/remove-file");
 exports.getAllRecords = async (req, res) => {
   try {
     // Ambil query parameter untuk filter course_meeting_id, user_id, course_id, search, dan pagination
-    const { 
-      course_meeting_id, 
-      user_id, 
+    const {
+      course_meeting_id,
+      user_id,
       course_id,
-      search, 
-      page = 1, 
-      limit = 10 
+      search,
+      page = 1,
+      limit = 10,
     } = req.query;
 
     // Hitung offset untuk pagination
@@ -172,7 +172,7 @@ exports.recordAttendance = async (req, res) => {
   const attendanceTime = new Date();
 
   try {
-    if (status === "present") {
+    if (status === "present" && req.userRole === "student") {
       // Ambil QR code yang ada dari database
       const [rowsQrCode] = await db
         .promise()
