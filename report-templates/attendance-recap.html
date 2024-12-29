@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+    rel="stylesheet">
+
+  <style>
+    body {
+      font-family: "Poppins", serif;
+      font-size: 12px;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    h3 {
+      font-size: 14px;
+      margin: 0;
+      padding: 0;
+      font-weight: normal;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      text-align: center;
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    th {
+      background-color: #f0f0f0;
+      font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .text-sm {
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Rekap Presensi</h1>
+  <div>
+    <h3><b>Tahun Ajaran:</b> {{academicYear}}</h3>
+    <h3><b>Semester:</b> {{semester}}</h3>
+    <h3><b>Mata Kuliah:</b> {{courseName}}</h3>  
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th rowspan="2" class="text-sm">No.</th>
+        <th rowspan="2" class="text-sm">Nama Lengkap</th>
+        <th rowspan="2" class="text-sm">NIM</th>
+        <th colspan="16" class="text-sm">Pertemuan</th>
+      </tr>
+      <tr>
+        <th>1</th>
+        <th>2</th>
+        <th>3</th>
+        <th>4</th>
+        <th>5</th>
+        <th>6</th>
+        <th>7</th>
+        <th>8</th>
+        <th>9</th>
+        <th>10</th>
+        <th>11</th>
+        <th>12</th>
+        <th>13</th>
+        <th>14</th>
+        <th>15</th>
+        <th>16</th>
+      </tr>
+    </thead>
+    <tbody>{{content}}</tbody>
+  </table>
+</body>
+
+</html>
