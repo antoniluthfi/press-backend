@@ -149,7 +149,7 @@ exports.createCourse = async (req, res) => {
     const [courseResult] = await db
       .promise()
       .query(
-        "INSERT INTO courses (name, code, lecturer_id, location_id) VALUES (?, ?, ?)",
+        "INSERT INTO courses (name, code, lecturer_id, location_id) VALUES (?, ?, ?, ?)",
         [name, code, lecturer_id, location_id]
       );
     const courseId = courseResult.insertId;
